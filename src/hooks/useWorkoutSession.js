@@ -9,10 +9,6 @@ function flattenExercises(day) {
   )
 }
 
-/**
- * Para cada ejercicio del día busca la última sesión (de cualquier día)
- * que lo haya registrado. Más robusto que filtrar solo por dayIndex.
- */
 async function buildLastDataMap(exercises) {
   const allSessions = await getAllSessions()
   const map = {}
@@ -20,9 +16,7 @@ async function buildLastDataMap(exercises) {
     const last = [...allSessions]
       .filter(s => s.exercises.some(e => e.exerciseId === ex.id))
       .at(-1)
-    if (last) {
-      map[ex.id] = last.exercises.find(e => e.exerciseId === ex.id)
-    }
+    if (last) map[ex.id] = last.exercises.find(e => e.exerciseId === ex.id)
   })
   return map
 }
@@ -35,7 +29,7 @@ export function useWorkoutSession() {
   const [setIndex, setSetIndex]               = useState(0)
   const [startedAt, setStartedAt]             = useState(null)
   const [loggedData, setLoggedData]           = useState({})
-  const [lastDataByExercise, setLastDataByEx] = useState({})  // exerciseId → { sets }
+  const [lastDataByExercise, setLastDataByEx] = useState({})
 
   const timer = useRestTimer(45)
 
@@ -75,23 +69,22 @@ export function useWorkoutSession() {
 
     setPhase('resting')
     timer.start(45, () => {
-      if (isLastSet) {
-        setExIndex(i => i + 1)
-        setSetIndex(0)
-      } else {
-        setSetIndex(i => i + 1)
-      }
+      if (isLastSet) { setExIndex(i => i + 1); setSetIndex(0) }
+      else           { setSetIndex(i => i + 1) }
       setPhase('exercising')
     })
   }, [currentExercise, setIndex, totalSets, exIndex, exercises.length, timer])
 
+  // Guardar sesión al completar — calcula duración desde startedAt
   useEffect(() => {
     if (phase !== 'done') return
+    const durationSeconds = startedAt
+      ? Math.round((Date.now() - new Date(startedAt).getTime()) / 1000)
+      : 0
     const exercisesPayload = Object.entries(loggedData).map(([exerciseId, sets]) => ({
-      exerciseId,
-      sets,
+      exerciseId, sets,
     }))
-    saveWorkoutSession({ dayIndex, startedAt, exercises: exercisesPayload })
+    saveWorkoutSession({ dayIndex, startedAt, exercises: exercisesPayload, durationSeconds })
   }, [phase]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const reset = useCallback(() => {
@@ -106,7 +99,6 @@ export function useWorkoutSession() {
     setStartedAt(null)
   }, [timer])
 
-  // Datos de referencia para el ejercicio actual (autocomplete)
   const prevExerciseData = lastDataByExercise[currentExercise?.id] ?? null
 
   return {
@@ -118,6 +110,7 @@ export function useWorkoutSession() {
     timer,
     loggedData,
     prevExerciseData,
+    startedAt,       // expuesto para el cronómetro de la UI
     startDay,
     logSet,
     reset,

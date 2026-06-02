@@ -5,7 +5,8 @@ import { useWeightStatus }       from '../hooks/useWeightStatus'
 import { useStagnationAlerts }   from '../hooks/useStagnationAlerts'
 import { WORKOUT_PLAN, ALL_EXERCISES } from '../data/workoutPlan'
 import { formatDateLong, formatDateFull } from '../utils/date'
-import WeightStatusBadge         from '../components/WeightStatusBadge'
+import { formatDuration, formatVolume }  from '../utils/format'
+import WeightStatusBadge                 from '../components/WeightStatusBadge'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -93,7 +94,7 @@ function NextSessionCard({ day, trainedToday, todaySession, onStart, onViewHisto
 }
 
 function RecentSessionRow({ session, index }) {
-  const day = WORKOUT_PLAN[session.dayIndex]
+  const day  = WORKOUT_PLAN[session.dayIndex]
   const date = formatDateLong(session.startedAt || session.completedAt)
   const sets = session.exercises.reduce((acc, ex) => acc + ex.sets.length, 0)
 
@@ -105,7 +106,19 @@ function RecentSessionRow({ session, index }) {
         <p className="text-sm font-medium text-slate-200">{day?.label ?? `Día ${session.dayIndex + 1}`}</p>
         <p className="text-xs text-slate-500">{date}</p>
       </div>
-      <span className="text-xs text-slate-500 tabular-nums">{sets} series</span>
+      <div className="flex flex-col items-end gap-0.5">
+        {session.durationSeconds > 0 && (
+          <span className="text-xs text-slate-400 font-mono tabular-nums">
+            {formatDuration(session.durationSeconds)}
+          </span>
+        )}
+        <span className="text-xs text-slate-500 tabular-nums">{sets} series</span>
+        {session.volumeKg > 0 && (
+          <span className="text-xs text-violet-500 tabular-nums">
+            {formatVolume(session.volumeKg)}
+          </span>
+        )}
+      </div>
     </div>
   )
 }

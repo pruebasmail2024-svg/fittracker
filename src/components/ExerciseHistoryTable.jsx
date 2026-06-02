@@ -1,4 +1,5 @@
 import { formatDateLong } from '../utils/date'
+import { formatVolume }   from '../utils/format'
 
 export default function ExerciseHistoryTable({ data }) {
   if (data.length === 0) return null
@@ -14,7 +15,12 @@ export default function ExerciseHistoryTable({ data }) {
             key={i}
             className={`px-4 py-3 bg-slate-800/40 ${i > 0 ? 'border-t border-slate-700/30' : ''}`}
           >
-            <p className="text-xs text-slate-500 mb-2">{formatDateLong(entry.rawDate)}</p>
+            <div className="flex items-baseline justify-between mb-2">
+              <p className="text-xs text-slate-500">{formatDateLong(entry.rawDate)}</p>
+              <span className="text-xs text-violet-400 tabular-nums font-medium">
+                {formatVolume(entry.volume)}
+              </span>
+            </div>
             <div className="flex gap-2 flex-wrap">
               {entry.sets.map((s, j) => (
                 <span

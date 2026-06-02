@@ -16,11 +16,14 @@ export function useExerciseHistory(exerciseId) {
           const ex = s.exercises.find(e => e.exerciseId === exerciseId)
           const maxWeight  = Math.max(...ex.sets.map(set => Number(set.weightKg)))
           const totalReps  = ex.sets.reduce((acc, set) => acc + Number(set.reps), 0)
+          const volume     = ex.sets.reduce((acc, set) =>
+            acc + Number(set.weightKg) * Number(set.reps), 0)
           return {
-            date:      formatDateChart(s.startedAt),  // para el eje X del gráfico
-            rawDate:   s.startedAt,                   // para la tabla
+            date:      formatDateChart(s.startedAt),
+            rawDate:   s.startedAt,
             maxWeight,
             totalReps,
+            volume:    Math.round(volume),
             sets:      ex.sets,
           }
         })
