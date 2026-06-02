@@ -26,7 +26,7 @@ export function useNotifications() {
     if (shouldFireWorkoutReminder(settings)) {
       if (perm === 'granted') {
         sendNotification(
-          '🏋️ ¡Momento de activar la testosterona!',
+          '🏋️ ¡Momento de activar el ejercicio!',
           'Tu sesión de 40 minutos te espera. Vamos por el progreso de hoy.'
         )
         markWorkoutReminderFired()
