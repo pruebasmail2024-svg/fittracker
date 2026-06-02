@@ -1,10 +1,12 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import {
   getPermissionStatus,
   requestPermission,
   getSettings,
   saveSettings,
 } from '../services/notificationService'
+import { generateAndDownloadBackup } from '../services/exportService'
+import { parseBackupZip, confirmImport } from '../services/importService'
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 
@@ -89,6 +91,15 @@ export default function Configuracion() {
   const [permission, setPermission] = useState(getPermissionStatus)
   const [settings, setSettings]     = useState(getSettings)
 
+  // Estados para exportar / importar
+  const [exportLoading, setExportLoading] = useState(false)
+  const [exportMsg, setExportMsg]         = useState('')
+  const [importPhase, setImportPhase]     = useState('idle') // idle|previewing|importing|done|error
+  const [importPreview, setImportPreview] = useState(null)
+  const [importData, setImportData]       = useState(null)
+  const [importError, setImportError]     = useState('')
+  const fileInputRef = useRef(null)
+
   const ui = PERMISSION_UI[permission] ?? PERMISSION_UI.default
 
   async function handleRequestPermission() {
@@ -100,6 +111,53 @@ export default function Configuracion() {
     const next = { ...settings, ...patch }
     setSettings(next)
     saveSettings(next)
+  }
+
+  async function handleExport() {
+    setExportLoading(true)
+    setExportMsg('')
+    try {
+      const { zipName } = await generateAndDownloadBackup()
+      setExportMsg(`✓ Descargado: ${zipName}`)
+    } catch (e) {
+      setExportMsg(`Error al exportar: ${e.message}`)
+    } finally {
+      setExportLoading(false)
+    }
+  }
+
+  async function handleFileSelect(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ''          // permite seleccionar el mismo archivo de nuevo
+    setImportError('')
+    try {
+      const result = await parseBackupZip(file)
+      setImportPreview(result.preview)
+      setImportData(result.data)
+      setImportPhase('previewing')
+    } catch (err) {
+      setImportError(err.message)
+      setImportPhase('error')
+    }
+  }
+
+  async function handleConfirmImport() {
+    setImportPhase('importing')
+    try {
+      await confirmImport(importData)
+      setImportPhase('done')
+    } catch (err) {
+      setImportError(err.message)
+      setImportPhase('error')
+    }
+  }
+
+  function resetImport() {
+    setImportPhase('idle')
+    setImportPreview(null)
+    setImportData(null)
+    setImportError('')
   }
 
   function toggleDay(day) {
@@ -219,12 +277,145 @@ export default function Configuracion() {
         )}
       </SectionCard>
 
+      {/* ── Mis Datos ── */}
+      <SectionCard title="🗄️ Mis Datos">
+
+        {/* A) Banner informativo fijo */}
+        <div className="rounded-xl bg-slate-700/40 border border-slate-600/40 px-4 py-3
+                        flex gap-3 items-start">
+          <span className="text-base shrink-0 mt-0.5">ℹ️</span>
+          <p className="text-xs text-slate-400 leading-relaxed">
+            Tu información está guardada en el caché de este navegador. Si borrás
+            el caché o cambiás de dispositivo, perderás tu historial.{' '}
+            <span className="text-slate-300">Descargá tu información periódicamente como respaldo.</span>
+          </p>
+        </div>
+
+        {/* B) Exportar */}
+        <div className="flex flex-col gap-2">
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+            Exportar historial
+          </p>
+          <button
+            onClick={handleExport}
+            disabled={exportLoading}
+            className="w-full rounded-xl bg-slate-700 border border-slate-600 py-3
+                       text-sm font-semibold text-slate-200 active:bg-slate-600
+                       transition-colors disabled:opacity-50"
+          >
+            {exportLoading ? 'Generando ZIP…' : '⬇️ Descargar mi historial'}
+          </button>
+          {exportMsg && (
+            <p className={`text-xs text-center ${exportMsg.startsWith('✓') ? 'text-emerald-400' : 'text-red-400'}`}>
+              {exportMsg}
+            </p>
+          )}
+          <p className="text-xs text-slate-600">
+            Descarga un ZIP con 3 archivos CSV: peso corporal, entrenamientos y
+            consistencia semanal.
+          </p>
+        </div>
+
+        {/* C) Importar */}
+        <div className="flex flex-col gap-2">
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+            Restaurar desde backup
+          </p>
+
+          {/* idle */}
+          {importPhase === 'idle' && (
+            <>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full rounded-xl border border-dashed border-slate-600 py-3
+                           text-sm font-medium text-slate-400 active:bg-slate-800
+                           transition-colors"
+              >
+                📂 Seleccionar archivo .zip
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".zip"
+                className="hidden"
+                onChange={handleFileSelect}
+              />
+            </>
+          )}
+
+          {/* previewing */}
+          {importPhase === 'previewing' && importPreview && (
+            <div className="flex flex-col gap-3">
+              <div className="rounded-xl bg-slate-700/50 border border-slate-600/50 px-4 py-3">
+                <p className="text-xs font-semibold text-slate-300 mb-2">
+                  Contenido del backup:
+                </p>
+                <ul className="text-sm text-slate-400 flex flex-col gap-1">
+                  <li>⚖️ {importPreview.pesoCount} registros de peso</li>
+                  <li>🏋️ {importPreview.sessionCount} sesiones de entrenamiento</li>
+                  <li>📅 {importPreview.weeksCount} semanas de consistencia</li>
+                </ul>
+                <p className="text-xs text-amber-400 mt-3">
+                  ⚠️ Esto reemplazará todos tus datos actuales.
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleConfirmImport}
+                  className="flex-1 rounded-xl bg-brand-500 py-3 text-sm font-bold
+                             text-white active:bg-brand-600 transition-colors"
+                >
+                  Confirmar restauración
+                </button>
+                <button
+                  onClick={resetImport}
+                  className="flex-1 rounded-xl border border-slate-600 py-3 text-sm
+                             text-slate-400 active:bg-slate-800 transition-colors"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* importing */}
+          {importPhase === 'importing' && (
+            <p className="text-sm text-slate-400 text-center py-2">Importando datos…</p>
+          )}
+
+          {/* done */}
+          {importPhase === 'done' && (
+            <div className="flex flex-col gap-2">
+              <p className="text-sm text-emerald-400 text-center">
+                ✓ Historial restaurado correctamente.
+              </p>
+              <button onClick={resetImport} className="text-xs text-slate-600 text-center">
+                Importar otro archivo
+              </button>
+            </div>
+          )}
+
+          {/* error */}
+          {importPhase === 'error' && (
+            <div className="flex flex-col gap-2">
+              <p className="text-xs text-red-400 leading-relaxed">{importError}</p>
+              <button
+                onClick={resetImport}
+                className="text-xs text-slate-500 text-center active:text-slate-300"
+              >
+                Intentar de nuevo
+              </button>
+            </div>
+          )}
+        </div>
+      </SectionCard>
+
       {/* Placeholder secciones futuras */}
       <div className="rounded-2xl bg-slate-800/30 border border-slate-700/30 px-4 py-4
                       flex flex-col gap-2">
         <h2 className="text-sm font-semibold text-slate-500">Próximamente</h2>
         <p className="text-xs text-slate-600">
-          Tema de color · Unidades (kg/lb) · Exportar datos · Borrar historial
+          Tema de color · Unidades (kg/lb) · Borrar historial
         </p>
       </div>
     </div>

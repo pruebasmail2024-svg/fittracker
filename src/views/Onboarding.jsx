@@ -1,19 +1,20 @@
 import { useState } from 'react'
 
 export default function Onboarding({ onComplete }) {
-  const [form, setForm] = useState({ age: '', weightKg: '', heightCm: '' })
+  const [step, setStep]   = useState('form')   // 'form' | 'storage'
+  const [form, setForm]   = useState({ age: '', weightKg: '', heightCm: '' })
   const [error, setError] = useState('')
 
   function handleChange(e) {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
   }
 
   function validate() {
     const { age, weightKg, heightCm } = form
-    if (!age || !weightKg || !heightCm) return 'Completá todos los campos.'
-    if (age < 10 || age > 120)          return 'Ingresá una edad válida.'
-    if (weightKg < 20 || weightKg > 300) return 'Ingresá un peso válido (kg).'
-    if (heightCm < 100 || heightCm > 250) return 'Ingresá una altura válida (cm).'
+    if (!age || !weightKg || !heightCm)      return 'Completá todos los campos.'
+    if (age < 10 || age > 120)               return 'Ingresá una edad válida.'
+    if (weightKg < 20 || weightKg > 300)     return 'Ingresá un peso válido (kg).'
+    if (heightCm < 100 || heightCm > 250)    return 'Ingresá una altura válida (cm).'
     return ''
   }
 
@@ -21,7 +22,43 @@ export default function Onboarding({ onComplete }) {
     e.preventDefault()
     const err = validate()
     if (err) { setError(err); return }
-    onComplete(form)
+    setStep('storage')   // mostrar aviso antes de guardar
+  }
+
+  if (step === 'storage') {
+    return (
+      <div className="flex flex-col justify-center min-h-full gap-8 px-2 py-8">
+        <div className="text-center">
+          <span className="text-5xl">📱</span>
+          <h2 className="mt-3 text-2xl font-bold text-slate-100">
+            Antes de empezar, importante
+          </h2>
+          <p className="mt-2 text-sm text-slate-400">
+            Entendé cómo se guardan tus datos.
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-4">
+          <StoragePoint icon="📱" text="Tu progreso se guarda en este navegador/dispositivo. No sube a ningún servidor." />
+          <StoragePoint
+            icon="🔄"
+            text="Para no perderlo si cambiás de dispositivo o borrás el caché, descargá tu historial periódicamente desde Configuración → Mis Datos."
+          />
+          <StoragePoint
+            icon="✅"
+            text="Podés restaurar tu historial en cualquier momento subiendo el archivo de backup."
+          />
+        </div>
+
+        <button
+          onClick={() => onComplete(form)}
+          className="w-full rounded-xl bg-brand-500 py-4 font-semibold text-white
+                     active:bg-brand-600 transition-colors text-lg"
+        >
+          Entendido, ¡empecemos!
+        </button>
+      </div>
+    )
   }
 
   return (
@@ -30,7 +67,7 @@ export default function Onboarding({ onComplete }) {
       <div className="text-center">
         <span className="text-5xl">👋</span>
         <h1 className="mt-3 text-2xl font-bold text-slate-100">
-          Bienvenido a Training &amp; Longevity
+          Bienvenido a FitTracker
         </h1>
         <p className="mt-2 text-sm text-slate-400">
           Contanos un poco sobre vos para personalizar tu experiencia.
@@ -80,13 +117,23 @@ export default function Onboarding({ onComplete }) {
           className="mt-2 w-full rounded-xl bg-brand-500 py-3.5 font-semibold text-white
                      active:bg-brand-600 transition-colors"
         >
-          Comenzar
+          Continuar →
         </button>
       </form>
 
       <p className="text-center text-xs text-slate-600">
         Tus datos se guardan solo en este dispositivo.
       </p>
+    </div>
+  )
+}
+
+function StoragePoint({ icon, text }) {
+  return (
+    <div className="flex gap-3 items-start rounded-xl bg-slate-800/60 border
+                    border-slate-700/50 px-4 py-3">
+      <span className="text-xl shrink-0">{icon}</span>
+      <p className="text-sm text-slate-300 leading-relaxed">{text}</p>
     </div>
   )
 }

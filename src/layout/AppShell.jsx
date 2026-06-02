@@ -1,6 +1,8 @@
-import { NavLink } from 'react-router-dom'
-import { useNotifications }      from '../hooks/useNotifications'
-import InAppReminderBanner        from '../components/InAppReminderBanner'
+import { NavLink }              from 'react-router-dom'
+import { useNotifications }     from '../hooks/useNotifications'
+import InAppReminderBanner      from '../components/InAppReminderBanner'
+import BackupReminderBanner     from '../components/BackupReminderBanner'
+import { generateAndDownloadBackup } from '../services/exportService'
 
 const NAV_ITEMS = [
   { to: '/',            label: 'Entrenar',    icon: '🏋️' },
@@ -11,7 +13,19 @@ const NAV_ITEMS = [
 ]
 
 export default function AppShell({ children }) {
-  const { showBanner, bannerType, dismissBanner } = useNotifications()
+  const {
+    showBanner, bannerType, dismissBanner,
+    showBackupBanner, dismissBackupBanner,
+  } = useNotifications()
+
+  async function handleBackupDownload() {
+    try {
+      await generateAndDownloadBackup()
+      dismissBackupBanner()
+    } catch {
+      dismissBackupBanner()
+    }
+  }
 
   return (
     <div className="flex flex-col h-dvh max-w-lg mx-auto bg-slate-950">
@@ -22,9 +36,15 @@ export default function AppShell({ children }) {
         </span>
       </header>
 
-      {/* Banner fallback in-app (aparece si el permiso no fue concedido) */}
+      {/* Banners bajo el header */}
       {showBanner && (
         <InAppReminderBanner type={bannerType} onDismiss={dismissBanner} />
+      )}
+      {showBackupBanner && (
+        <BackupReminderBanner
+          onDownload={handleBackupDownload}
+          onSnooze={dismissBackupBanner}
+        />
       )}
 
       {/* Contenido principal */}

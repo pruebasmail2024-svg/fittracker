@@ -1,25 +1,28 @@
 import { useState, useEffect, useCallback } from 'react'
 import { getAllWeightLogs } from '../services/weightService'
+import { getProfile }       from '../services/profileService'
 import {
   getPermissionStatus,
   getSettings,
   sendNotification,
-  shouldFireWorkoutReminder, markWorkoutReminderFired,
-  shouldFireWeightReminder,  markWeightReminderFired,
-  isBannerDismissed, dismissBannerUntilTomorrow,
+  shouldFireWorkoutReminder,  markWorkoutReminderFired,
+  shouldFireWeightReminder,   markWeightReminderFired,
+  isBannerDismissed,          dismissBannerUntilTomorrow,
+  shouldShowBackupReminder,   snoozeBackupReminder,
 } from '../services/notificationService'
 
 export function useNotifications() {
-  const [permission, setPermission] = useState(getPermissionStatus)
-  const [showBanner, setShowBanner] = useState(false)
-  const [bannerType, setBannerType] = useState('workout') // 'workout' | 'weight'
+  const [permission, setPermission]           = useState(getPermissionStatus)
+  const [showBanner, setShowBanner]           = useState(false)
+  const [bannerType, setBannerType]           = useState('workout')
+  const [showBackupBanner, setShowBackupBanner] = useState(false)
 
   const check = useCallback(async () => {
     const perm     = getPermissionStatus()
     const settings = getSettings()
     setPermission(perm)
 
-    let shouldShowBanner = false
+    let shouldShowInApp = false
     let type = null
 
     // ── Recordatorio de entrenamiento ──────────────────────────────────────
@@ -31,13 +34,13 @@ export function useNotifications() {
         )
         markWorkoutReminderFired()
       } else if (!isBannerDismissed()) {
-        shouldShowBanner = true
+        shouldShowInApp = true
         type = 'workout'
       }
     }
 
     // ── Recordatorio de peso quincenal ─────────────────────────────────────
-    const logs = await getAllWeightLogs()
+    const logs    = await getAllWeightLogs()
     const lastLog = logs.at(-1)
     const daysSince = lastLog
       ? (Date.now() - new Date(lastLog.recordedAt)) / (1000 * 60 * 60 * 24)
@@ -51,18 +54,30 @@ export function useNotifications() {
         )
         markWeightReminderFired()
       } else if (!isBannerDismissed()) {
-        shouldShowBanner = true
-        type = type ?? 'weight'  // peso tiene menor prioridad que entrenamiento
+        shouldShowInApp = true
+        type = type ?? 'weight'
       }
     }
 
-    if (shouldShowBanner) {
+    if (shouldShowInApp) {
       setBannerType(type)
       setShowBanner(true)
     }
+
+    // ── Recordatorio de backup (30 días) ───────────────────────────────────
+    const profile = await getProfile()
+    if (profile && shouldShowBackupReminder(profile.createdAt)) {
+      if (perm === 'granted') {
+        sendNotification(
+          '💾 Recordatorio de backup',
+          'Descargá tu historial de FitTracker para no perder tu progreso.'
+        )
+      }
+      // El banner de backup se muestra siempre (independiente del permiso)
+      setShowBackupBanner(true)
+    }
   }, [])
 
-  // Chequear al montar y cada vez que el usuario vuelve a la pestaña
   useEffect(() => {
     check()
     const onVisible = () => {
@@ -77,5 +92,14 @@ export function useNotifications() {
     setShowBanner(false)
   }, [])
 
-  return { permission, setPermission, showBanner, bannerType, dismissBanner }
+  const dismissBackupBanner = useCallback(() => {
+    snoozeBackupReminder(7)
+    setShowBackupBanner(false)
+  }, [])
+
+  return {
+    permission, setPermission,
+    showBanner, bannerType, dismissBanner,
+    showBackupBanner, dismissBackupBanner,
+  }
 }

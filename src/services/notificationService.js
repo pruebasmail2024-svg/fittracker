@@ -5,6 +5,8 @@ const KEYS = {
   lastWorkoutFired:   'fittracker_last_workout_notif',
   lastWeightFired:    'fittracker_last_weight_notif',
   bannerDismissed:    'fittracker_banner_dismissed',
+  lastBackup:         'fittracker_last_backup',
+  backupSnoozed:      'fittracker_backup_reminder_until',
 }
 
 // ─── Configuración ────────────────────────────────────────────────────────────
@@ -110,4 +112,37 @@ export function dismissBannerUntilTomorrow() {
   tomorrow.setDate(tomorrow.getDate() + 1)
   tomorrow.setHours(0, 0, 0, 0)
   localStorage.setItem(KEYS.bannerDismissed, tomorrow.toISOString())
+}
+
+// ─── Backup de historial (recordatorio de 30 días) ────────────────────────────
+
+/**
+ * Marca que el usuario acaba de descargar el backup.
+ * Llamado desde exportService después de generar el ZIP.
+ */
+export function markBackupDownloaded() {
+  localStorage.setItem(KEYS.lastBackup, new Date().toISOString())
+}
+
+/**
+ * Devuelve true si pasaron más de 30 días desde el último backup
+ * (o desde la creación del perfil si nunca se hizo backup).
+ */
+export function shouldShowBackupReminder(profileCreatedAt) {
+  const snoozed = localStorage.getItem(KEYS.backupSnoozed)
+  if (snoozed && new Date(snoozed) > new Date()) return false
+
+  const lastBackup     = localStorage.getItem(KEYS.lastBackup)
+  const referenceDate  = lastBackup ?? profileCreatedAt
+  if (!referenceDate) return false
+
+  const daysSince = (Date.now() - new Date(referenceDate)) / (1000 * 60 * 60 * 24)
+  return daysSince > 30
+}
+
+/** Postpone el recordatorio de backup N días (por defecto 7). */
+export function snoozeBackupReminder(days = 7) {
+  const until = new Date()
+  until.setDate(until.getDate() + days)
+  localStorage.setItem(KEYS.backupSnoozed, until.toISOString())
 }
