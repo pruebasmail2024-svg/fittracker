@@ -1,21 +1,34 @@
-import { useWorkoutSession }   from '../hooks/useWorkoutSession'
-import { useStagnationAlerts } from '../hooks/useStagnationAlerts'
-import DayPicker               from '../components/DayPicker'
-import ExerciseCard            from '../components/ExerciseCard'
-import SetLogger               from '../components/SetLogger'
-import RestTimer               from '../components/RestTimer'
-import SessionSummary          from '../components/SessionSummary'
-import StagnationAlert         from '../components/StagnationAlert'
-import ExerciseInlineChart     from '../components/ExerciseInlineChart'
+import { useEffect, useRef }    from 'react'
+import { useLocation }           from 'react-router-dom'
+import { useWorkoutSession }     from '../hooks/useWorkoutSession'
+import { useStagnationAlerts }   from '../hooks/useStagnationAlerts'
+import DayPicker                 from '../components/DayPicker'
+import ExerciseCard              from '../components/ExerciseCard'
+import SetLogger                 from '../components/SetLogger'
+import RestTimer                 from '../components/RestTimer'
+import SessionSummary            from '../components/SessionSummary'
+import StagnationAlert           from '../components/StagnationAlert'
+import ExerciseInlineChart       from '../components/ExerciseInlineChart'
 
 export default function Entrenar() {
-  const session = useWorkoutSession()
+  const location = useLocation()
+  const session  = useWorkoutSession()
   const { alerts } = useStagnationAlerts()
+  const autoStarted = useRef(false)
 
   const {
     phase, dayIndex, currentExercise, setIndex, totalSets,
     timer, loggedData, prevExerciseData, startDay, logSet, reset,
   } = session
+
+  // Auto-arrancar el día si venimos del Home con un día pre-seleccionado
+  useEffect(() => {
+    const autoStartDay = location.state?.autoStartDay
+    if (typeof autoStartDay === 'number' && !autoStarted.current && phase === 'idle') {
+      autoStarted.current = true
+      startDay(autoStartDay)
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (phase === 'idle') {
     return <DayPicker onSelectDay={startDay} alerts={alerts} />

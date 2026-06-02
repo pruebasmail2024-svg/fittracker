@@ -5,11 +5,12 @@ import BackupReminderBanner     from '../components/BackupReminderBanner'
 import { generateAndDownloadBackup } from '../services/exportService'
 
 const NAV_ITEMS = [
-  { to: '/',            label: 'Entrenar',    icon: '🏋️' },
-  { to: '/historial',   label: 'Historial',   icon: '📅' },
-  { to: '/longevidad',  label: 'Longevidad',  icon: '🧬' },
-  { to: '/en-radar',    label: 'En Radar',    icon: '🥗' },
-  { to: '/config',      label: 'Config',      icon: '⚙️' },
+  { to: '/',            label: 'Inicio',   icon: '🏠' },
+  { to: '/entrenar',    label: 'Entreno',  icon: '🏋️' },
+  { to: '/historial',   label: 'Historial',icon: '📅' },
+  { to: '/longevidad',  label: 'Longev.',  icon: '🧬' },
+  { to: '/en-radar',    label: 'Radar',    icon: '🥗' },
+  { to: '/config',      label: 'Config',   icon: '⚙️' },
 ]
 
 export default function AppShell({ children }) {
