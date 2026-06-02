@@ -6,14 +6,18 @@ export async function saveWorkoutSession({ dayIndex, startedAt, exercises }) {
   return db.add('workoutSessions', createWorkoutSession({ dayIndex, startedAt, exercises }))
 }
 
+/** Todas las sesiones ordenadas por fecha ascendente. */
+export async function getAllSessions() {
+  const db = await dbPromise
+  return db.getAllFromIndex('workoutSessions', 'by_date')
+}
+
 /**
  * Devuelve la sesión más reciente del mismo día para mostrar
  * los pesos/reps de referencia (sobrecarga progresiva).
  */
 export async function getLastSessionByDay(dayIndex) {
-  const db = await dbPromise
-  // Trae todas las sesiones ordenadas por fecha y filtra por día
-  const all = await db.getAllFromIndex('workoutSessions', 'by_date')
+  const all    = await getAllSessions()
   const forDay = all.filter(s => s.dayIndex === dayIndex)
-  return forDay.at(-1) ?? null  // la más reciente
+  return forDay.at(-1) ?? null
 }
