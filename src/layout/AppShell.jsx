@@ -1,4 +1,6 @@
 import { NavLink } from 'react-router-dom'
+import { useNotifications }      from '../hooks/useNotifications'
+import InAppReminderBanner        from '../components/InAppReminderBanner'
 
 const NAV_ITEMS = [
   { to: '/',            label: 'Entrenar',    icon: '🏋️' },
@@ -9,21 +11,28 @@ const NAV_ITEMS = [
 ]
 
 export default function AppShell({ children }) {
+  const { showBanner, bannerType, dismissBanner } = useNotifications()
+
   return (
     <div className="flex flex-col h-dvh max-w-lg mx-auto bg-slate-950">
       {/* Header */}
       <header className="flex items-center justify-between px-4 py-3 border-b border-slate-800">
         <span className="text-brand-400 font-bold tracking-wide text-sm uppercase">
-          Training &amp; Longevity
+          FitTracker
         </span>
       </header>
 
-      {/* Contenido principal — crece para llenar el espacio disponible */}
+      {/* Banner fallback in-app (aparece si el permiso no fue concedido) */}
+      {showBanner && (
+        <InAppReminderBanner type={bannerType} onDismiss={dismissBanner} />
+      )}
+
+      {/* Contenido principal */}
       <main className="flex-1 overflow-y-auto px-4 py-4">
         {children}
       </main>
 
-      {/* Barra de navegación inferior — estilo app móvil */}
+      {/* Navegación inferior */}
       <nav className="border-t border-slate-800 bg-slate-900">
         <ul className="flex">
           {NAV_ITEMS.map(({ to, label, icon }) => (
