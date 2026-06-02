@@ -2,13 +2,14 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { useProfile } from './hooks/useProfile'
 import { addWeightLog } from './services/weightService'
 import { createWeightLog } from './models/weightLog'
-import AppShell      from './layout/AppShell'
-import Onboarding    from './views/Onboarding'
-import Entrenar      from './views/Entrenar'
-import Historial     from './views/Historial'
-import Longevidad    from './views/Longevidad'
-import EnRadar       from './views/EnRadar'
-import Configuracion from './views/Configuracion'
+import AppShell              from './layout/AppShell'
+import Onboarding            from './views/Onboarding'
+import Entrenar              from './views/Entrenar'
+import Historial             from './views/Historial'
+import Longevidad            from './views/Longevidad'
+import EnRadar               from './views/EnRadar'
+import Configuracion         from './views/Configuracion'
+import ProactiveWeightModal  from './components/ProactiveWeightModal'
 
 export default function App() {
   const { profile, loading, saveProfile } = useProfile()
@@ -48,6 +49,8 @@ export default function App() {
           <Route path="/config"     element={<Configuracion />} />
         </Routes>
       </AppShell>
+      {/* Modal proactivo: se muestra si pasaron >15 días sin registrar peso */}
+      <ProactiveWeightModal />
     </BrowserRouter>
   )
 }
