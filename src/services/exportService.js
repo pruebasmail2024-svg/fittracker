@@ -36,22 +36,24 @@ function buildPesoCSV(weightLogs) {
 function buildEntrenamientosCSV(sessions) {
   const rows = []
   sessions.forEach(session => {
-    const fecha = isoToDate(session.startedAt)
+    const fecha      = isoToDate(session.startedAt)
+    const tipo       = session.sessionType ?? 'gym'
     session.exercises.forEach(ex => {
       ex.sets.forEach((set, i) => {
         rows.push({
           fecha,
-          dia:           session.dayIndex,
+          dia:           session.dayIndex ?? '',
           ejercicio:     ex.exerciseId,
           serie_numero:  i + 1,
           peso_kg:       set.weightKg,
           repeticiones:  set.reps,
+          tipo_sesion:   tipo,
         })
       })
     })
   })
   return toCSV(
-    ['fecha', 'dia', 'ejercicio', 'serie_numero', 'peso_kg', 'repeticiones'],
+    ['fecha', 'dia', 'ejercicio', 'serie_numero', 'peso_kg', 'repeticiones', 'tipo_sesion'],
     rows
   )
 }

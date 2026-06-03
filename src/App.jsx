@@ -6,6 +6,7 @@ import AppShell              from './layout/AppShell'
 import Onboarding            from './views/Onboarding'
 import Home                  from './views/Home'
 import Entrenar              from './views/Entrenar'
+import HomeWorkout           from './views/HomeWorkout'
 import Historial             from './views/Historial'
 import Longevidad            from './views/Longevidad'
 import EnRadar               from './views/EnRadar'
@@ -43,8 +44,9 @@ export default function App() {
     <BrowserRouter>
       <AppShell>
         <Routes>
-          <Route path="/"           element={<Home />} />
-          <Route path="/entrenar"   element={<Entrenar />} />
+          <Route path="/"              element={<Home />} />
+          <Route path="/entrenar"      element={<Entrenar />} />
+          <Route path="/entrenar-casa" element={<HomeWorkout />} />
           <Route path="/historial"  element={<Historial />} />
           <Route path="/longevidad" element={<Longevidad />} />
           <Route path="/en-radar"   element={<EnRadar />} />

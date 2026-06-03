@@ -1,0 +1,106 @@
+export const HOME_EXERCISE_CATEGORIES = [
+  {
+    category: 'Peso corporal',
+    exercises: [
+      {
+        id: 'home_pushup',
+        name: 'Flexiones',
+        type: 'reps',
+        defaultWeight: null,
+        gif: null,
+        placeholder: '💪',
+        muscles: 'Pectoral, tríceps, deltoides anterior',
+        cues: 'Manos a ancho de hombros, cuerpo en línea recta de cabeza a talones. Bajá hasta casi tocar el piso con el pecho y empujá de vuelta.',
+        commonError: 'No dejes que las caderas caigan o se eleven — apretá el core.',
+      },
+      {
+        id: 'home_squat',
+        name: 'Sentadillas',
+        type: 'reps',
+        defaultWeight: null,
+        gif: null,
+        placeholder: '🦵',
+        muscles: 'Cuádriceps, glúteos, isquiotibiales',
+        cues: 'Pies a ancho de hombros, punteras levemente abiertas. Bajá como si fueras a sentarte en una silla, rodillas alineadas con los pies, pecho erguido.',
+        commonError: 'No dejes que las rodillas colapsen hacia adentro al subir.',
+      },
+      {
+        id: 'home_pullup',
+        name: 'Dominadas',
+        type: 'reps',
+        defaultWeight: null,
+        gif: null,
+        placeholder: '🔝',
+        muscles: 'Dorsal ancho, bíceps, romboides',
+        cues: 'Agarre prono algo más ancho que los hombros. Subí hasta que el mentón supere la barra. Bajá de forma controlada hasta extender completamente los brazos.',
+        commonError: 'No uses impulso del cuerpo — el movimiento tiene que ser limpio y controlado.',
+      },
+    ],
+  },
+  {
+    category: 'Mancuernas',
+    exercises: [
+      {
+        id: 'home_dumbbell_curl',
+        name: 'Curl de Bíceps',
+        type: 'reps+kg',
+        defaultWeight: 5,
+        gif: '/exercises/bicep-curl.gif',
+        placeholder: null,
+        muscles: 'Bíceps braquial, braquial, braquiorradial',
+        cues: 'Codos pegados al torso, sin moverse. Subí el peso supinando la muñeca y apretando el bíceps arriba. Bajá de forma controlada resistiendo la carga.',
+        commonError: 'No uses el impulso de las caderas para subir el peso.',
+      },
+      {
+        id: 'home_lateral_raise',
+        name: 'Elevaciones Laterales',
+        type: 'reps+kg',
+        defaultWeight: 5,
+        gif: null,
+        placeholder: '🙌',
+        muscles: 'Deltoides lateral',
+        cues: 'De pie, brazos a los costados. Subí las mancuernas hacia los lados hasta la altura de los hombros, codos levemente flexionados. Bajá controlado.',
+        commonError: 'No uses impulso del torso — el movimiento es puro deltoides lateral.',
+      },
+      {
+        id: 'home_front_raise',
+        name: 'Elevaciones Frontales',
+        type: 'reps+kg',
+        defaultWeight: 5,
+        gif: null,
+        placeholder: '🤲',
+        muscles: 'Deltoides anterior',
+        cues: 'De pie, brazos extendidos al frente. Subí las mancuernas hasta la altura de los hombros de forma controlada y bajá lentamente.',
+        commonError: 'No arquees la espalda al subir — mantené el core activo.',
+      },
+      {
+        id: 'home_arnold_press',
+        name: 'Arnold Press',
+        type: 'reps+kg',
+        defaultWeight: 5,
+        gif: '/exercises/overhead-press.gif',
+        placeholder: null,
+        muscles: 'Deltoides (las tres cabezas), tríceps',
+        cues: 'Mancuernas frente a la cara con palmas hacia vos. Al subir, rotá las manos hacia afuera y extendé los brazos sobre la cabeza. Invertí al bajar.',
+        commonError: 'No cierres las mancuernas arriba del todo — mantenelas separadas para proteger los hombros.',
+      },
+      {
+        id: 'home_dumbbell_row',
+        name: 'Remo con Mancuerna',
+        type: 'reps+kg',
+        defaultWeight: 5,
+        gif: '/exercises/barbell-row.gif',
+        placeholder: null,
+        muscles: 'Dorsal ancho, romboides, trapecio medio, bíceps',
+        cues: 'Apoyá una mano y rodilla en un apoyo firme. Tirá la mancuerna hacia la cadera apretando el omóplato. Bajá de forma controlada.',
+        commonError: 'No rotes el torso al subir — el movimiento es solo del brazo y la espalda.',
+      },
+    ],
+  },
+]
+
+export const ALL_HOME_EXERCISES = HOME_EXERCISE_CATEGORIES.flatMap(c => c.exercises)
+
+export function getHomeExerciseById(id) {
+  return ALL_HOME_EXERCISES.find(e => e.id === id) ?? null
+}

@@ -35,7 +35,7 @@ function MetricCard({ label, value, sub, accent = false }) {
   )
 }
 
-function NextSessionCard({ day, trainedToday, todaySession, onStart, onViewHistory }) {
+function NextSessionCard({ day, trainedToday, todaySession, onStart, onViewHistory, onHomeWorkout }) {
   const totalSets = todaySession
     ? todaySession.exercises.reduce((acc, ex) => acc + ex.sets.length, 0)
     : null
@@ -89,6 +89,15 @@ function NextSessionCard({ day, trainedToday, todaySession, onStart, onViewHisto
           💪 Iniciar sesión de hoy
         </button>
       )}
+
+      {/* Botón secundario: entrenamiento en casa */}
+      <button
+        onClick={onHomeWorkout}
+        className="w-full rounded-xl border border-slate-700 py-3 text-sm font-medium
+                   text-slate-400 active:bg-slate-800 transition-colors"
+      >
+        🏠 Entrenar en Casa
+      </button>
     </div>
   )
 }
@@ -183,6 +192,7 @@ export default function Home() {
         todaySession={todaySession}
         onStart={() => navigate('/entrenar', { state: { autoStartDay: nextDayIndex } })}
         onViewHistory={() => navigate('/historial')}
+        onHomeWorkout={() => navigate('/entrenar-casa', { state: { nextDayIndex } })}
       />
 
       {/* ── 3. Métricas ── */}

@@ -24,9 +24,11 @@ function calcWeekScore(sessions, weightLogs, weekStart, isCurrentWeek) {
   const weekEnd = getWeekEnd(weekStart)
 
   // Sesiones completadas en esta semana
+  // Las sesiones 'home_extra' (complementos) NO cuentan para el score
   const weekSessions = sessions.filter(s => {
-    const d = new Date(s.completedAt || s.startedAt)
-    return d >= weekStart && d <= weekEnd
+    const d    = new Date(s.completedAt || s.startedAt)
+    const type = s.sessionType ?? 'gym'
+    return d >= weekStart && d <= weekEnd && type !== 'home_extra'
   })
   const trainings    = Math.min(weekSessions.length, 3)
   const trainingPts  = trainings * 33

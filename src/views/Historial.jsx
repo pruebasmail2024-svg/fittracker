@@ -1,10 +1,13 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useBodyWeightChart }  from '../hooks/useBodyWeightChart'
 import { useExerciseHistory }  from '../hooks/useExerciseHistory'
 import { useStagnationAlerts } from '../hooks/useStagnationAlerts'
 import { useWeightStatus }     from '../hooks/useWeightStatus'
 import { formatDateLong }      from '../utils/date'
+import { formatDuration, formatVolume } from '../utils/format'
 import { ALL_EXERCISES }       from '../data/workoutPlan'
+import { WORKOUT_PLAN }        from '../data/workoutPlan'
+import { getAllSessions }       from '../services/workoutService'
 import BodyWeightChart         from '../components/BodyWeightChart'
 import ExerciseSelector        from '../components/ExerciseSelector'
 import ExerciseHistoryChart    from '../components/ExerciseHistoryChart'
@@ -14,10 +17,15 @@ import RotationAlert           from '../components/RotationAlert'
 import WeightStatusBadge       from '../components/WeightStatusBadge'
 import WeightLogModal          from '../components/WeightLogModal'
 
-const TABS = ['Peso corporal', 'Ejercicios']
+const TABS = ['Peso corporal', 'Ejercicios', 'Sesiones']
 
 export default function Historial() {
   const [activeTab, setActiveTab]         = useState(0)
+  const [allSessions, setAllSessions]     = useState([])
+
+  useEffect(() => {
+    getAllSessions().then(s => setAllSessions([...s].reverse()))
+  }, [])
   const [selectedExercise, setSelectedEx] = useState(null)
   const [showModal, setShowModal]         = useState(false)
 
@@ -150,12 +158,65 @@ export default function Historial() {
         </div>
       )}
 
+      {/* ── Tab: Sesiones ───────────────────────────────────────────── */}
+      {activeTab === 2 && (
+        <div className="flex flex-col gap-3">
+          {allSessions.length === 0 && (
+            <p className="text-slate-500 text-sm text-center py-6">
+              Todavía no hay sesiones registradas.
+            </p>
+          )}
+          {allSessions.map((session, i) => (
+            <SessionRow key={session.id ?? i} session={session} />
+          ))}
+        </div>
+      )}
+
       {/* Modal de registro */}
       <WeightLogModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
         onSave={weightKg => addLog({ weightKg })}
       />
+    </div>
+  )
+}
+
+function SessionRow({ session }) {
+  const type = session.sessionType ?? 'gym'
+  const day  = session.dayIndex != null ? WORKOUT_PLAN[session.dayIndex] : null
+  const sets = (session.exercises ?? []).reduce((acc, ex) => acc + ex.sets.length, 0)
+
+  const label = type === 'home_replacement'
+    ? `🏠 Casa — reemplazó ${day?.label ?? ''}`
+    : type === 'home_extra'
+      ? '🏠 Casa — complemento'
+      : `🏋️ ${day?.label ?? 'Gym'}`
+
+  const labelColor = type === 'gym' ? 'text-brand-400' : 'text-sky-400'
+
+  return (
+    <div className="rounded-xl bg-slate-800/60 border border-slate-700/50 px-4 py-3
+                    flex items-start justify-between gap-2">
+      <div className="flex flex-col gap-0.5">
+        <span className={`text-xs font-semibold ${labelColor}`}>{label}</span>
+        <span className="text-xs text-slate-500">
+          {formatDateLong(session.startedAt || session.completedAt)}
+        </span>
+      </div>
+      <div className="flex flex-col items-end gap-0.5 shrink-0">
+        {session.durationSeconds > 0 && (
+          <span className="text-xs text-slate-400 tabular-nums font-mono">
+            {formatDuration(session.durationSeconds)}
+          </span>
+        )}
+        <span className="text-xs text-slate-500">{sets} series</span>
+        {session.volumeKg > 0 && (
+          <span className="text-xs text-violet-500 tabular-nums">
+            {formatVolume(session.volumeKg)}
+          </span>
+        )}
+      </div>
     </div>
   )
 }

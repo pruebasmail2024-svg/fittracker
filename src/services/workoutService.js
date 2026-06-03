@@ -1,9 +1,9 @@
 import { dbPromise } from './db'
 import { createWorkoutSession } from '../models/workoutSession'
 
-export async function saveWorkoutSession({ dayIndex, startedAt, exercises }) {
+export async function saveWorkoutSession({ dayIndex, startedAt, exercises, durationSeconds = 0, sessionType = 'gym' }) {
   const db = await dbPromise
-  return db.add('workoutSessions', createWorkoutSession({ dayIndex, startedAt, exercises }))
+  return db.add('workoutSessions', createWorkoutSession({ dayIndex, startedAt, exercises, durationSeconds, sessionType }))
 }
 
 /** Todas las sesiones ordenadas por fecha ascendente. */
