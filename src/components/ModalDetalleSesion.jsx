@@ -39,15 +39,16 @@ function ExerciseDetail({ ex }) {
   const esPesoCorpEx = ej?.equipo === 'peso-corporal'
 
   return (
-    <div className="rounded-xl bg-slate-800 border border-slate-700 overflow-hidden">
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-700/50">
+    <div className="rounded-xl bg-slate-800 border border-slate-700">
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-700/50
+                      rounded-t-xl">
         {ej?.gif && (
           <img src={ej.gif} alt={nombre}
             className="w-9 h-9 rounded-lg object-cover shrink-0 bg-slate-700" />
         )}
         <p className="text-sm font-semibold text-slate-200">{nombre}</p>
       </div>
-      <div className="px-4 py-2">
+      <div className="px-4 pt-2 pb-3 rounded-b-xl">
         {ex.sets.map((set, i) => (
           <SetLine
             key={i}
@@ -134,7 +135,7 @@ export default function ModalDetalleSesion({ session, onClose, onEdited }) {
       </div>
 
       {/* Lista de ejercicios */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3">
+      <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4 flex flex-col gap-3">
         {(session.exercises ?? []).map(ex => (
           <ExerciseDetail key={ex.exerciseId} ex={ex} />
         ))}

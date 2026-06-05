@@ -61,7 +61,7 @@ function SetRow({ set, index, esPausaEx, esPesoCorpEx, onChange }) {
         onChange={e => onChange(index, 'reps', e.target.value)}
         className="w-14 bg-slate-700 border border-slate-600 rounded-lg text-sm
                    text-slate-200 text-center py-1.5 focus:outline-none
-                   focus:border-brand-500 tabular-nums flex-1"
+                   focus:border-brand-500 tabular-nums shrink-0"
       />
       <span className="text-xs text-slate-500 shrink-0">{repsLabel}</span>
     </div>
@@ -179,7 +179,7 @@ export default function ModalEditarSesion({ session, onSave, onClose }) {
       </div>
 
       {/* Lista de ejercicios scrolleable */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3">
+      <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4 flex flex-col gap-3">
         {exercises.map(ex => (
           <ExerciseBlock
             key={ex.exerciseId}
