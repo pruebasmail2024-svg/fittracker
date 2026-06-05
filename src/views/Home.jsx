@@ -11,7 +11,29 @@ import { formatDuration, formatVolume }  from '../utils/format'
 import WeightStatusBadge                 from '../components/WeightStatusBadge'
 import ModalEditarSesion                 from '../components/ModalEditarSesion'
 import ModalConfirmarBorrado             from '../components/ModalConfirmarBorrado'
+import ModalDetalleSesion                from '../components/ModalDetalleSesion'
 import Toast                             from '../components/Toast'
+
+// ─── Helper: músculos principales de una sesión ───────────────────────────────
+
+function musculosDeSesion(session) {
+  const vistos = new Set()
+  const result = []
+  for (const ex of session.exercises ?? []) {
+    const ej = resolverEjercicio(ex.exerciseId)
+    const m  = ej?.musculo
+    if (m && !vistos.has(m)) { vistos.add(m); result.push(m) }
+    if (result.length >= 3) break
+  }
+  if (result.length > 0) {
+    return result.map(m => m.charAt(0).toUpperCase() + m.slice(1)).join(' · ')
+  }
+  // Fallback legacy: nombres de los primeros 2 ejercicios
+  return (session.exercises ?? [])
+    .slice(0, 2)
+    .map(ex => resolverEjercicio(ex.exerciseId)?.nombre ?? ex.exerciseId)
+    .join(' · ')
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -113,12 +135,15 @@ function NextSessionCard({ day, trainedToday, todaySession, onStart, onViewHisto
   )
 }
 
-function RecentSessionRow({ session, index, onEdit, onDelete }) {
-  const rutina = getRutina()
-  const type   = session.sessionType ?? 'gym'
-  const day    = session.dayIndex != null ? rutina[session.dayIndex] : null
-  const date   = formatDateLong(session.startedAt || session.completedAt)
-  const sets   = session.exercises.reduce((acc, ex) => acc + ex.sets.length, 0)
+function RecentSessionRow({ session, index, onDetail, onEdit, onDelete }) {
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  const rutina   = getRutina()
+  const type     = session.sessionType ?? 'gym'
+  const day      = session.dayIndex != null ? rutina[session.dayIndex] : null
+  const date     = formatDateLong(session.startedAt || session.completedAt)
+  const sets     = session.exercises.reduce((acc, ex) => acc + ex.sets.length, 0)
+  const musculos = musculosDeSesion(session)
 
   const dayLabel = type === 'home_extra'
     ? '🏠 Complemento'
@@ -127,15 +152,35 @@ function RecentSessionRow({ session, index, onEdit, onDelete }) {
       : day?.label ?? `Día ${(session.dayIndex ?? 0) + 1}`
 
   return (
-    <div className={`flex flex-col gap-2 py-2.5
-      ${index > 0 ? 'border-t border-slate-700/40' : ''}`}
-    >
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-slate-200">{dayLabel}</p>
-          <p className="text-xs text-slate-500">{date}</p>
+    <div className={`relative py-2.5 ${index > 0 ? 'border-t border-slate-700/40' : ''}`}>
+
+      {/* Área tappable principal → abre detalle */}
+      <button
+        onClick={onDetail}
+        className="w-full text-left active:opacity-70 transition-opacity"
+      >
+        {/* Fila 1: día + fecha + botón ⋯ */}
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-slate-200">{dayLabel} · {date}</p>
+            {musculos && (
+              <p className="text-xs text-slate-500 mt-0.5 truncate">{musculos}</p>
+            )}
+          </div>
+          {/* Botón ⋯ — stopPropagation para que no abra el detalle */}
+          <button
+            onClick={e => { e.stopPropagation(); setMenuOpen(v => !v) }}
+            className="flex items-center justify-center w-11 h-11 -mr-2 -mt-1
+                       rounded-xl text-slate-500 active:bg-slate-700 active:text-slate-300
+                       transition-colors shrink-0 text-lg"
+            aria-label="Acciones"
+          >
+            ⋯
+          </button>
         </div>
-        <div className="flex flex-col items-end gap-0.5">
+
+        {/* Fila 2: métricas */}
+        <div className="flex items-center gap-2 mt-1 flex-wrap">
           {session.durationSeconds > 0 && (
             <span className="text-xs text-slate-400 font-mono tabular-nums">
               {formatDuration(session.durationSeconds)}
@@ -148,27 +193,36 @@ function RecentSessionRow({ session, index, onEdit, onDelete }) {
             </span>
           )}
         </div>
-      </div>
+      </button>
 
-      {/* Botones editar / borrar */}
-      <div className="flex gap-2">
-        <button
-          onClick={onEdit}
-          className="flex-1 flex items-center justify-center gap-1 rounded-xl
-                     border border-slate-600 py-2 text-xs font-semibold text-slate-400
-                     active:bg-slate-700 transition-colors min-h-[44px]"
-        >
-          ✏️ Editar
-        </button>
-        <button
-          onClick={onDelete}
-          className="flex-1 flex items-center justify-center gap-1 rounded-xl
-                     border border-red-500/30 bg-red-500/5 py-2 text-xs font-semibold
-                     text-red-400 active:bg-red-500/15 transition-colors min-h-[44px]"
-        >
-          🗑️ Borrar
-        </button>
-      </div>
+      {/* Menú contextual */}
+      {menuOpen && (
+        <>
+          {/* Overlay para cerrar al tocar afuera */}
+          <div
+            className="fixed inset-0 z-30"
+            onClick={() => setMenuOpen(false)}
+          />
+          <div className="absolute right-0 top-8 z-40 bg-slate-800 border border-slate-700
+                          rounded-2xl shadow-xl overflow-hidden min-w-[180px]">
+            <button
+              onClick={() => { setMenuOpen(false); onEdit() }}
+              className="w-full flex items-center gap-3 px-4 py-3.5 text-sm text-slate-200
+                         active:bg-slate-700 transition-colors text-left"
+            >
+              ✏️ Editar sesión
+            </button>
+            <div className="h-px bg-slate-700" />
+            <button
+              onClick={() => { setMenuOpen(false); onDelete() }}
+              className="w-full flex items-center gap-3 px-4 py-3.5 text-sm text-red-400
+                         active:bg-slate-700 transition-colors text-left"
+            >
+              🗑️ Borrar sesión
+            </button>
+          </div>
+        </>
+      )}
     </div>
   )
 }
@@ -184,6 +238,7 @@ export default function Home() {
     showBackupAlert, reload,
   } = useHomeData()
 
+  const [detailSession,   setDetailSession]   = useState(null)
   const [editingSession,  setEditingSession]  = useState(null)
   const [deletingSession, setDeletingSession] = useState(null)
   const [toast,           setToast]           = useState('')
@@ -191,6 +246,12 @@ export default function Home() {
   async function handleSaveEdit(updatedExercises) {
     await updateSession(editingSession.id, updatedExercises)
     setEditingSession(null)
+    setToast('Sesión actualizada ✓')
+    reload()
+  }
+
+  function handleEditedFromDetail() {
+    setDetailSession(null)
     setToast('Sesión actualizada ✓')
     reload()
   }
@@ -323,6 +384,7 @@ export default function Home() {
               key={session.id ?? i}
               session={session}
               index={i}
+              onDetail={() => setDetailSession(session)}
               onEdit={() => setEditingSession(session)}
               onDelete={() => setDeletingSession(session)}
             />
@@ -376,7 +438,16 @@ export default function Home() {
         </div>
       )}
 
-      {/* Modal editar sesión */}
+      {/* Modal detalle de sesión */}
+      {detailSession && (
+        <ModalDetalleSesion
+          session={detailSession}
+          onClose={() => setDetailSession(null)}
+          onEdited={handleEditedFromDetail}
+        />
+      )}
+
+      {/* Modal editar sesión (acceso directo desde menú ⋯) */}
       {editingSession && (
         <ModalEditarSesion
           session={editingSession}
