@@ -1,12 +1,17 @@
+import { useState }              from 'react'
 import { useNavigate }          from 'react-router-dom'
 import { useHomeData }           from '../hooks/useHomeData'
 import { useConsistencyScore }   from '../hooks/useConsistencyScore'
 import { useWeightStatus }       from '../hooks/useWeightStatus'
 import { useStagnationAlerts }   from '../hooks/useStagnationAlerts'
-import { WORKOUT_PLAN, ALL_EXERCISES } from '../data/workoutPlan'
+import { getRutina, resolverEjercicio } from '../services/rutinaService'
+import { updateSession, deleteSession } from '../services/workoutService'
 import { formatDateLong, formatDateFull } from '../utils/date'
 import { formatDuration, formatVolume }  from '../utils/format'
 import WeightStatusBadge                 from '../components/WeightStatusBadge'
+import ModalEditarSesion                 from '../components/ModalEditarSesion'
+import ModalConfirmarBorrado             from '../components/ModalConfirmarBorrado'
+import Toast                             from '../components/Toast'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -53,14 +58,20 @@ function NextSessionCard({ day, trainedToday, todaySession, onStart, onViewHisto
         </h2>
       </div>
 
-      {/* Ejercicios del día */}
+      {/* Ejercicios del día — de a pares */}
       <ul className="flex flex-col gap-1">
-        {day.pairs.map((pair, i) => (
-          <li key={i} className="text-xs text-slate-400 flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-slate-600 shrink-0" />
-            {pair.exercises.map(e => e.name).join(' + ')}
-          </li>
-        ))}
+        {(day.slots ?? []).reduce((acc, slot, i) => {
+          if (i % 2 === 0) acc.push([slot, day.slots[i + 1]].filter(Boolean))
+          return acc
+        }, []).map((par, i) => {
+          const nombres = par.map(s => resolverEjercicio(s.exerciseId)?.nombre ?? s.exerciseId)
+          return (
+            <li key={i} className="text-xs text-slate-400 flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-slate-600 shrink-0" />
+              {nombres.join(' + ')}
+            </li>
+          )
+        })}
       </ul>
 
       {/* CTA */}
@@ -102,31 +113,61 @@ function NextSessionCard({ day, trainedToday, todaySession, onStart, onViewHisto
   )
 }
 
-function RecentSessionRow({ session, index }) {
-  const day  = WORKOUT_PLAN[session.dayIndex]
-  const date = formatDateLong(session.startedAt || session.completedAt)
-  const sets = session.exercises.reduce((acc, ex) => acc + ex.sets.length, 0)
+function RecentSessionRow({ session, index, onEdit, onDelete }) {
+  const rutina = getRutina()
+  const type   = session.sessionType ?? 'gym'
+  const day    = session.dayIndex != null ? rutina[session.dayIndex] : null
+  const date   = formatDateLong(session.startedAt || session.completedAt)
+  const sets   = session.exercises.reduce((acc, ex) => acc + ex.sets.length, 0)
+
+  const dayLabel = type === 'home_extra'
+    ? '🏠 Complemento'
+    : type === 'home_replacement'
+      ? `🏠 ${day?.label ?? 'Casa'}`
+      : day?.label ?? `Día ${(session.dayIndex ?? 0) + 1}`
 
   return (
-    <div className={`flex items-center justify-between py-2.5
+    <div className={`flex flex-col gap-2 py-2.5
       ${index > 0 ? 'border-t border-slate-700/40' : ''}`}
     >
-      <div>
-        <p className="text-sm font-medium text-slate-200">{day?.label ?? `Día ${session.dayIndex + 1}`}</p>
-        <p className="text-xs text-slate-500">{date}</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-medium text-slate-200">{dayLabel}</p>
+          <p className="text-xs text-slate-500">{date}</p>
+        </div>
+        <div className="flex flex-col items-end gap-0.5">
+          {session.durationSeconds > 0 && (
+            <span className="text-xs text-slate-400 font-mono tabular-nums">
+              {formatDuration(session.durationSeconds)}
+            </span>
+          )}
+          <span className="text-xs text-slate-500 tabular-nums">{sets} series</span>
+          {session.volumeKg > 0 && (
+            <span className="text-xs text-violet-500 tabular-nums">
+              {formatVolume(session.volumeKg)}
+            </span>
+          )}
+        </div>
       </div>
-      <div className="flex flex-col items-end gap-0.5">
-        {session.durationSeconds > 0 && (
-          <span className="text-xs text-slate-400 font-mono tabular-nums">
-            {formatDuration(session.durationSeconds)}
-          </span>
-        )}
-        <span className="text-xs text-slate-500 tabular-nums">{sets} series</span>
-        {session.volumeKg > 0 && (
-          <span className="text-xs text-violet-500 tabular-nums">
-            {formatVolume(session.volumeKg)}
-          </span>
-        )}
+
+      {/* Botones editar / borrar */}
+      <div className="flex gap-2">
+        <button
+          onClick={onEdit}
+          className="flex-1 flex items-center justify-center gap-1 rounded-xl
+                     border border-slate-600 py-2 text-xs font-semibold text-slate-400
+                     active:bg-slate-700 transition-colors min-h-[44px]"
+        >
+          ✏️ Editar
+        </button>
+        <button
+          onClick={onDelete}
+          className="flex-1 flex items-center justify-center gap-1 rounded-xl
+                     border border-red-500/30 bg-red-500/5 py-2 text-xs font-semibold
+                     text-red-400 active:bg-red-500/15 transition-colors min-h-[44px]"
+        >
+          🗑️ Borrar
+        </button>
       </div>
     </div>
   )
@@ -140,18 +181,37 @@ export default function Home() {
   const {
     loading, trainedToday, todaySession, nextDayIndex, isTrainingDay,
     recentSessions, bestProgress, streak, weightCurrent, weightDelta,
-    showBackupAlert,
+    showBackupAlert, reload,
   } = useHomeData()
+
+  const [editingSession,  setEditingSession]  = useState(null)
+  const [deletingSession, setDeletingSession] = useState(null)
+  const [toast,           setToast]           = useState('')
+
+  async function handleSaveEdit(updatedExercises) {
+    await updateSession(editingSession.id, updatedExercises)
+    setEditingSession(null)
+    setToast('Sesión actualizada ✓')
+    reload()
+  }
+
+  async function handleConfirmDelete() {
+    await deleteSession(deletingSession.id)
+    setDeletingSession(null)
+    setToast('Sesión eliminada')
+    reload()
+  }
 
   const { current: weekScore }                           = useConsistencyScore()
   const { status: wStatus, label: wLabel, color: wColor, daysSince } = useWeightStatus()
   const { alerts }                                       = useStagnationAlerts()
 
-  const nextDay = WORKOUT_PLAN[nextDayIndex]
+  const rutina  = getRutina()
+  const nextDay = rutina[nextDayIndex]
 
   const stalledExercises = Object.entries(alerts)
     .filter(([, v]) => v)
-    .map(([id]) => ALL_EXERCISES.find(e => e.id === id))
+    .map(([id]) => resolverEjercicio(id))
     .filter(Boolean)
 
   const hasAlerts = stalledExercises.length > 0 || showBackupAlert
@@ -259,7 +319,13 @@ export default function Home() {
 
           {/* Últimas 3 sesiones */}
           {recentSessions.map((session, i) => (
-            <RecentSessionRow key={session.id ?? i} session={session} index={i} />
+            <RecentSessionRow
+              key={session.id ?? i}
+              session={session}
+              index={i}
+              onEdit={() => setEditingSession(session)}
+              onDelete={() => setDeletingSession(session)}
+            />
           ))}
         </div>
       )}
@@ -279,7 +345,7 @@ export default function Home() {
             >
               <span className="text-base shrink-0">⚠️</span>
               <div className="flex-1">
-                <p className="text-sm text-amber-300 font-medium">{ex.name}</p>
+                <p className="text-sm text-amber-300 font-medium">{ex.nombre ?? ex.name}</p>
                 <p className="text-xs text-slate-500">Estancamiento detectado · 3 sesiones sin progreso</p>
               </div>
               <button
@@ -309,6 +375,27 @@ export default function Home() {
           )}
         </div>
       )}
+
+      {/* Modal editar sesión */}
+      {editingSession && (
+        <ModalEditarSesion
+          session={editingSession}
+          onSave={handleSaveEdit}
+          onClose={() => setEditingSession(null)}
+        />
+      )}
+
+      {/* Modal confirmar borrado */}
+      {deletingSession && (
+        <ModalConfirmarBorrado
+          session={deletingSession}
+          onConfirm={handleConfirmDelete}
+          onClose={() => setDeletingSession(null)}
+        />
+      )}
+
+      {/* Toast */}
+      {toast && <Toast message={toast} onDone={() => setToast('')} />}
     </div>
   )
 }

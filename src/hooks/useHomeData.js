@@ -73,8 +73,10 @@ export function useHomeData() {
   const [profile, setProfile]     = useState(null)
   const [sessions, setSessions]   = useState([])
   const [weightLogs, setWeightLogs] = useState([])
+  const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
+    setLoading(true)
     Promise.all([getProfile(), getAllSessions(), getAllWeightLogs()])
       .then(([p, s, w]) => {
         setProfile(p)
@@ -82,7 +84,9 @@ export function useHomeData() {
         setWeightLogs(w)
         setLoading(false)
       })
-  }, [])
+  }, [refreshKey])
+
+  const reload = () => setRefreshKey(k => k + 1)
 
   const today        = new Date().toDateString()
   const todaySession = sessions.find(s =>
@@ -122,5 +126,6 @@ export function useHomeData() {
     weightInitial,
     weightDelta,
     showBackupAlert,
+    reload,
   }
 }

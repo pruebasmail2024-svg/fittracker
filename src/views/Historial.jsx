@@ -5,9 +5,9 @@ import { useStagnationAlerts } from '../hooks/useStagnationAlerts'
 import { useWeightStatus }     from '../hooks/useWeightStatus'
 import { formatDateLong }      from '../utils/date'
 import { formatDuration, formatVolume } from '../utils/format'
-import { ALL_EXERCISES }       from '../data/workoutPlan'
-import { WORKOUT_PLAN }        from '../data/workoutPlan'
-import { getAllSessions }       from '../services/workoutService'
+import { resolverEjercicio }   from '../services/rutinaService'
+import { getRutina }           from '../services/rutinaService'
+import { getAllSessions, updateSession, deleteSession } from '../services/workoutService'
 import BodyWeightChart         from '../components/BodyWeightChart'
 import ExerciseSelector        from '../components/ExerciseSelector'
 import ExerciseHistoryChart    from '../components/ExerciseHistoryChart'
@@ -16,18 +16,27 @@ import StagnationAlert         from '../components/StagnationAlert'
 import RotationAlert           from '../components/RotationAlert'
 import WeightStatusBadge       from '../components/WeightStatusBadge'
 import WeightLogModal          from '../components/WeightLogModal'
+import ModalEditarSesion       from '../components/ModalEditarSesion'
+import ModalConfirmarBorrado   from '../components/ModalConfirmarBorrado'
+import Toast                   from '../components/Toast'
 
 const TABS = ['Peso corporal', 'Ejercicios', 'Sesiones']
 
 export default function Historial() {
   const [activeTab, setActiveTab]         = useState(0)
   const [allSessions, setAllSessions]     = useState([])
-
-  useEffect(() => {
-    getAllSessions().then(s => setAllSessions([...s].reverse()))
-  }, [])
   const [selectedExercise, setSelectedEx] = useState(null)
   const [showModal, setShowModal]         = useState(false)
+
+  // ── Estado editar / borrar ──
+  const [editingSession,   setEditingSession]   = useState(null)
+  const [deletingSession,  setDeletingSession]  = useState(null)
+  const [toast,            setToast]            = useState('')
+
+  const reloadSessions = () =>
+    getAllSessions().then(s => setAllSessions([...s].reverse()))
+
+  useEffect(() => { reloadSessions() }, [])
 
   const { logs, lastLog, status, label, color, addLog } = useWeightStatus()
   const { chartData, profile }                          = useBodyWeightChart()
@@ -40,8 +49,22 @@ export default function Historial() {
 
   const stalledExercises = Object.entries(alerts)
     .filter(([, stalled]) => stalled)
-    .map(([id]) => ALL_EXERCISES.find(e => e.id === id))
+    .map(([id]) => resolverEjercicio(id))
     .filter(Boolean)
+
+  async function handleSaveEdit(updatedExercises) {
+    await updateSession(editingSession.id, updatedExercises)
+    setEditingSession(null)
+    setToast('Sesión actualizada ✓')
+    reloadSessions()
+  }
+
+  async function handleConfirmDelete() {
+    await deleteSession(deletingSession.id)
+    setDeletingSession(null)
+    setToast('Sesión eliminada')
+    reloadSessions()
+  }
 
   const sortedLogs = [...logs].reverse()
 
@@ -131,7 +154,7 @@ export default function Historial() {
           {stalledExercises.length > 0 && (
             <div className="flex flex-col gap-2">
               {stalledExercises.map(ex => (
-                <StagnationAlert key={ex.id} exerciseName={ex.name} />
+                <StagnationAlert key={ex.id} exerciseName={ex.nombre ?? ex.name} />
               ))}
             </div>
           )}
@@ -167,25 +190,52 @@ export default function Historial() {
             </p>
           )}
           {allSessions.map((session, i) => (
-            <SessionRow key={session.id ?? i} session={session} />
+            <SessionRow
+              key={session.id ?? i}
+              session={session}
+              onEdit={() => setEditingSession(session)}
+              onDelete={() => setDeletingSession(session)}
+            />
           ))}
         </div>
       )}
 
-      {/* Modal de registro */}
+      {/* Modal de registro de peso */}
       <WeightLogModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
         onSave={weightKg => addLog({ weightKg })}
       />
+
+      {/* Modal editar sesión */}
+      {editingSession && (
+        <ModalEditarSesion
+          session={editingSession}
+          onSave={handleSaveEdit}
+          onClose={() => setEditingSession(null)}
+        />
+      )}
+
+      {/* Modal confirmar borrado */}
+      {deletingSession && (
+        <ModalConfirmarBorrado
+          session={deletingSession}
+          onConfirm={handleConfirmDelete}
+          onClose={() => setDeletingSession(null)}
+        />
+      )}
+
+      {/* Toast */}
+      {toast && <Toast message={toast} onDone={() => setToast('')} />}
     </div>
   )
 }
 
-function SessionRow({ session }) {
-  const type = session.sessionType ?? 'gym'
-  const day  = session.dayIndex != null ? WORKOUT_PLAN[session.dayIndex] : null
-  const sets = (session.exercises ?? []).reduce((acc, ex) => acc + ex.sets.length, 0)
+function SessionRow({ session, onEdit, onDelete }) {
+  const rutina = getRutina()
+  const type   = session.sessionType ?? 'gym'
+  const day    = session.dayIndex != null ? rutina[session.dayIndex] : null
+  const sets   = (session.exercises ?? []).reduce((acc, ex) => acc + ex.sets.length, 0)
 
   const label = type === 'home_replacement'
     ? `🏠 Casa — reemplazó ${day?.label ?? ''}`
@@ -197,25 +247,53 @@ function SessionRow({ session }) {
 
   return (
     <div className="rounded-xl bg-slate-800/60 border border-slate-700/50 px-4 py-3
-                    flex items-start justify-between gap-2">
-      <div className="flex flex-col gap-0.5">
-        <span className={`text-xs font-semibold ${labelColor}`}>{label}</span>
-        <span className="text-xs text-slate-500">
-          {formatDateLong(session.startedAt || session.completedAt)}
-        </span>
+                    flex flex-col gap-3">
+      {/* Info principal */}
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex flex-col gap-0.5">
+          <span className={`text-xs font-semibold ${labelColor}`}>{label}</span>
+          <span className="text-xs text-slate-500">
+            {formatDateLong(session.startedAt || session.completedAt)}
+          </span>
+          {session.editadaEl && (
+            <span className="text-xs text-slate-600 italic">
+              Editada el {formatDateLong(session.editadaEl)}
+            </span>
+          )}
+        </div>
+        <div className="flex flex-col items-end gap-0.5 shrink-0">
+          {session.durationSeconds > 0 && (
+            <span className="text-xs text-slate-400 tabular-nums font-mono">
+              {formatDuration(session.durationSeconds)}
+            </span>
+          )}
+          <span className="text-xs text-slate-500">{sets} series</span>
+          {session.volumeKg > 0 && (
+            <span className="text-xs text-violet-500 tabular-nums">
+              {formatVolume(session.volumeKg)}
+            </span>
+          )}
+        </div>
       </div>
-      <div className="flex flex-col items-end gap-0.5 shrink-0">
-        {session.durationSeconds > 0 && (
-          <span className="text-xs text-slate-400 tabular-nums font-mono">
-            {formatDuration(session.durationSeconds)}
-          </span>
-        )}
-        <span className="text-xs text-slate-500">{sets} series</span>
-        {session.volumeKg > 0 && (
-          <span className="text-xs text-violet-500 tabular-nums">
-            {formatVolume(session.volumeKg)}
-          </span>
-        )}
+
+      {/* Botones editar / borrar */}
+      <div className="flex gap-2">
+        <button
+          onClick={onEdit}
+          className="flex-1 flex items-center justify-center gap-1.5 rounded-xl
+                     border border-slate-600 py-2.5 text-xs font-semibold text-slate-400
+                     active:bg-slate-700 transition-colors min-h-[44px]"
+        >
+          ✏️ Editar
+        </button>
+        <button
+          onClick={onDelete}
+          className="flex-1 flex items-center justify-center gap-1.5 rounded-xl
+                     border border-red-500/30 bg-red-500/5 py-2.5 text-xs font-semibold
+                     text-red-400 active:bg-red-500/15 transition-colors min-h-[44px]"
+        >
+          🗑️ Borrar
+        </button>
       </div>
     </div>
   )
