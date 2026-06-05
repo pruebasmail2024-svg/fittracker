@@ -57,14 +57,16 @@ export function generateWeightProjection(startDate, startWeightKg, months = 13) 
 // ─── Variantes de rotación (cada 120 días) ───────────────────────────────────
 
 export const ROTATION_VARIANTS = {
-  'squat':               'Sentadilla en máquina / Prensa de piernas',
-  'lat-pulldown':        'Dominadas con asistencia',
-  'bench-press':         'Press de Pecho con mancuernas',
-  'romanian-deadlift':   'Buenos días con barra',
-  'overhead-press':      'Press Militar con mancuernas',
-  'barbell-row':         'Remo en máquina / Remo con mancuerna',
-  'lunge':               'Zancadas inversas / Step-up',
-  'incline-bench-press': 'Press Inclinado con mancuernas',
-  'bicep-curl':          'Curl martillo con mancuernas',
-  'tricep-extension':    'Fondos en paralelas',
+  'sentadilla-con-barra':                   'prensa-de-piernas',
+  'jalon-al-pecho':                          'dominadas',
+  'press-de-banca-con-barra':               'press-de-banca-con-mancuernas',
+  'peso-muerto-rumano':                      'buenos-dias',
+  'press-militar-con-barra':                'press-de-hombros-con-mancuernas',
+  'remo-con-barra':                          'remo-con-mancuerna',
+  'zancadas-con-mancuernas':                'sentadilla-goblet',
+  'incline-bench-press':                    'press-de-banca-con-mancuernas',
+  'curl-con-barra':                          'curl-martillo',
+  'extension-de-triceps-con-mancuerna':     'fondos-en-banco',
+  'plancha':                                 'crunch-abdominal',
+  'farmers-walk':                            null,
 }

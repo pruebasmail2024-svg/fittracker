@@ -1,0 +1,848 @@
+{
+  "_meta": {
+    "descripcion": "Catálogo de ejercicios para FitTracker. Reemplaza los ejercicios hardcodeados de workoutPlan.js y homeExercises.js.",
+    "fuente": "free-exercise-db (https://github.com/yuhonas/free-exercise-db) — The Unlicense / dominio público",
+    "totalEjercicios": 41,
+    "formatoGif": "400x225, ~15fps, loop ida-y-vuelta interpolado. 121-175 KB c/u.",
+    "filtros": {
+      "musculo": [
+        "abdominales",
+        "biceps",
+        "cuadriceps",
+        "espalda",
+        "gemelos",
+        "gluteos",
+        "hombros",
+        "isquiotibiales",
+        "pecho",
+        "triceps"
+      ],
+      "equipo": [
+        "barra",
+        "mancuernas",
+        "maquina",
+        "polea",
+        "kettlebell",
+        "bandas",
+        "barra-z",
+        "peso-corporal",
+        "otro"
+      ],
+      "lugar": [
+        "gimnasio",
+        "casa"
+      ],
+      "mecanica": [
+        "compuesto",
+        "aislamiento"
+      ],
+      "nivel": [
+        "principiante",
+        "intermedio",
+        "avanzado"
+      ]
+    }
+  },
+  "ejercicios": [
+    {
+      "id": "press-de-banca-con-barra",
+      "nombre": "Press de banca con barra",
+      "musculo": "pecho",
+      "musculosSecundarios": [
+        "hombros",
+        "triceps"
+      ],
+      "equipo": "barra",
+      "lugar": [
+        "gimnasio"
+      ],
+      "mecanica": "compuesto",
+      "nivel": "principiante",
+      "gif": "gifs/press-de-banca-con-barra.gif",
+      "fuente": "free-exercise-db",
+      "fuenteId": "Barbell_Bench_Press_-_Medium_Grip",
+      "cues": "Trabaja pecho, hombro anterior y tríceps. Acostate con los omóplatos juntos y apoyados, pies firmes en el piso. Bajá la barra controlada hasta el pecho con codos a ~45° y empujá sin despegar la lumbar.",
+      "commonError": "No rebotes la barra en el pecho ni abras los codos a 90°."
+    },
+    {
+      "id": "press-de-banca-con-mancuernas",
+      "nombre": "Press de banca con mancuernas",
+      "musculo": "pecho",
+      "musculosSecundarios": [
+        "hombros",
+        "triceps"
+      ],
+      "equipo": "mancuernas",
+      "lugar": [
+        "gimnasio",
+        "casa"
+      ],
+      "mecanica": "compuesto",
+      "nivel": "principiante",
+      "gif": "gifs/press-de-banca-con-mancuernas.gif",
+      "fuente": "free-exercise-db",
+      "fuenteId": "Dumbbell_Bench_Press",
+      "cues": "Pecho, hombro anterior y tríceps, con más rango que la barra. Bajá las mancuernas a los lados del pecho con codos a ~45° y empujá juntando arriba sin chocarlas, muñecas firmes.",
+      "commonError": "No dejes caer los codos por debajo de la línea del hombro."
+    },
+    {
+      "id": "aperturas-con-mancuernas",
+      "nombre": "Aperturas con mancuernas",
+      "musculo": "pecho",
+      "musculosSecundarios": [],
+      "equipo": "mancuernas",
+      "lugar": [
+        "gimnasio",
+        "casa"
+      ],
+      "mecanica": "aislamiento",
+      "nivel": "principiante",
+      "gif": "gifs/aperturas-con-mancuernas.gif",
+      "fuente": "free-exercise-db",
+      "fuenteId": "Dumbbell_Flyes",
+      "cues": "Aísla el pecho con un movimiento de abrazo. Codos levemente flexionados y fijos, abrí los brazos en arco hasta sentir estiramiento y cerrá apretando el pecho. Usá poco peso.",
+      "commonError": "No flexiones los codos durante el movimiento (eso lo convierte en press)."
+    },
+    {
+      "id": "press-de-pecho-en-maquina",
+      "nombre": "Press de pecho en máquina",
+      "musculo": "pecho",
+      "musculosSecundarios": [
+        "hombros",
+        "triceps"
+      ],
+      "equipo": "maquina",
+      "lugar": [
+        "gimnasio"
+      ],
+      "mecanica": "compuesto",
+      "nivel": "principiante",
+      "gif": "gifs/press-de-pecho-en-maquina.gif",
+      "fuente": "free-exercise-db",
+      "fuenteId": "Machine_Bench_Press",
+      "cues": "Pecho, hombro y tríceps en un patrón guiado y seguro, ideal para aprender el empuje. Ajustá el asiento para que las manijas queden a la altura del pecho y empujá controlado sin bloquear de golpe.",
+      "commonError": "No dejes el asiento mal regulado: empujar desde muy arriba o abajo carga el hombro."
+    },
+    {
+      "id": "flexiones-de-brazos",
+      "nombre": "Flexiones de brazos",
+      "musculo": "pecho",
+      "musculosSecundarios": [
+        "hombros",
+        "triceps"
+      ],
+      "equipo": "peso-corporal",
+      "lugar": [
+        "gimnasio",
+        "casa"
+      ],
+      "mecanica": "compuesto",
+      "nivel": "principiante",
+      "gif": "gifs/flexiones-de-brazos.gif",
+      "fuente": "free-exercise-db",
+      "fuenteId": "Pushups",
+      "cues": "Pecho, hombro y tríceps usando tu peso. Cuerpo en línea recta de cabeza a talones, abdomen y glúteos activos. Bajá el pecho al piso con codos a ~45°.",
+      "commonError": "No hundas la cadera ni recortes el rango."
+    },
+    {
+      "id": "remo-con-barra",
+      "nombre": "Remo con barra",
+      "musculo": "espalda",
+      "musculosSecundarios": [
+        "biceps",
+        "dorsales",
+        "hombros"
+      ],
+      "equipo": "barra",
+      "lugar": [
+        "gimnasio"
+      ],
+      "mecanica": "compuesto",
+      "nivel": "principiante",
+      "gif": "gifs/remo-con-barra.gif",
+      "fuente": "free-exercise-db",
+      "fuenteId": "Bent_Over_Barbell_Row",
+      "cues": "Espalda media, dorsales y bíceps. Bisagra de cadera con espalda recta a ~45° y rodillas flexionadas. Llevá la barra al ombligo tirando con los codos y juntando los omóplatos.",
+      "commonError": "No redondees la espalda baja ni uses impulso de cadera."
+    },
+    {
+      "id": "remo-con-mancuerna",
+      "nombre": "Remo con mancuerna a una mano",
+      "musculo": "espalda",
+      "musculosSecundarios": [
+        "biceps",
+        "dorsales",
+        "hombros"
+      ],
+      "equipo": "mancuernas",
+      "lugar": [
+        "gimnasio",
+        "casa"
+      ],
+      "mecanica": "compuesto",
+      "nivel": "principiante",
+      "gif": "gifs/remo-con-mancuerna.gif",
+      "fuente": "free-exercise-db",
+      "fuenteId": "One-Arm_Dumbbell_Row",
+      "cues": "Dorsal y espalda media de un lado, con buen rango. Apoyá rodilla y mano en el banco con espalda plana. Subí la mancuerna al costado de la cadera llevando el codo atrás.",
+      "commonError": "No gires el torso para subir más peso; tirá con la espalda."
+    },
+    {
+      "id": "jalon-al-pecho",
+      "nombre": "Jalón al pecho",
+      "musculo": "espalda",
+      "musculosSecundarios": [
+        "biceps",
+        "espalda-media",
+        "hombros"
+      ],
+      "equipo": "polea",
+      "lugar": [
+        "gimnasio"
+      ],
+      "mecanica": "compuesto",
+      "nivel": "principiante",
+      "gif": "gifs/jalon-al-pecho.gif",
+      "fuente": "free-exercise-db",
+      "fuenteId": "Wide-Grip_Lat_Pulldown",
+      "cues": "Dorsales y espalda media; alternativa a la dominada. Agarre algo más ancho que los hombros y pecho arriba. Llevá la barra al pecho bajando los codos y juntando los omóplatos.",
+      "commonError": "No lleves la barra detrás de la nuca ni te tires hacia atrás con el torso."
+    },
+    {
+      "id": "remo-en-polea-sentado",
+      "nombre": "Remo en polea sentado",
+      "musculo": "espalda",
+      "musculosSecundarios": [
+        "biceps",
+        "dorsales",
+        "hombros"
+      ],
+      "equipo": "polea",
+      "lugar": [
+        "gimnasio"
+      ],
+      "mecanica": "compuesto",
+      "nivel": "principiante",
+      "gif": "gifs/remo-en-polea-sentado.gif",
+      "fuente": "free-exercise-db",
+      "fuenteId": "Seated_Cable_Rows",
+      "cues": "Espalda media, dorsales y bíceps con tensión constante. Espalda recta y pecho firme, tirá del agarre al abdomen llevando los codos atrás y juntando los omóplatos.",
+      "commonError": "No balancees el torso adelante y atrás para mover el peso."
+    },
+    {
+      "id": "dominadas",
+      "nombre": "Dominadas",
+      "musculo": "espalda",
+      "musculosSecundarios": [
+        "biceps",
+        "espalda-media"
+      ],
+      "equipo": "peso-corporal",
+      "lugar": [
+        "gimnasio",
+        "casa"
+      ],
+      "mecanica": "compuesto",
+      "nivel": "principiante",
+      "gif": "gifs/dominadas.gif",
+      "fuente": "free-exercise-db",
+      "fuenteId": "Pullups",
+      "cues": "Dorsales, espalda media y bíceps con tu peso; el mejor ejercicio de tirón. Subí el pecho hacia la barra llevando los codos abajo. Si no llegás, usá banda o máquina asistida.",
+      "commonError": "No hagas medio rango ni te impulses con balanceo."
+    },
+    {
+      "id": "press-militar-con-barra",
+      "nombre": "Press militar con barra",
+      "musculo": "hombros",
+      "musculosSecundarios": [
+        "triceps"
+      ],
+      "equipo": "barra",
+      "lugar": [
+        "gimnasio"
+      ],
+      "mecanica": "compuesto",
+      "nivel": "principiante",
+      "gif": "gifs/press-militar-con-barra.gif",
+      "fuente": "free-exercise-db",
+      "fuenteId": "Standing_Military_Press",
+      "cues": "Hombros y tríceps, de pie. Abdomen y glúteos firmes para proteger la lumbar. Empujá la barra arriba en línea recta pasando levemente la cabeza.",
+      "commonError": "No arquees la zona lumbar para empujar más peso."
+    },
+    {
+      "id": "press-de-hombros-con-mancuernas",
+      "nombre": "Press de hombros con mancuernas",
+      "musculo": "hombros",
+      "musculosSecundarios": [
+        "triceps"
+      ],
+      "equipo": "mancuernas",
+      "lugar": [
+        "gimnasio",
+        "casa"
+      ],
+      "mecanica": "compuesto",
+      "nivel": "intermedio",
+      "gif": "gifs/press-de-hombros-con-mancuernas.gif",
+      "fuente": "free-exercise-db",
+      "fuenteId": "Dumbbell_Shoulder_Press",
+      "cues": "Hombros y tríceps con buen rango y control de cada lado. Codos bajo las muñecas, empujá arriba sin chocar las mancuernas ni bloquear de golpe.",
+      "commonError": "No arquees la espalda ni bajes poco las mancuernas."
+    },
+    {
+      "id": "elevaciones-laterales",
+      "nombre": "Elevaciones laterales",
+      "musculo": "hombros",
+      "musculosSecundarios": [],
+      "equipo": "mancuernas",
+      "lugar": [
+        "gimnasio",
+        "casa"
+      ],
+      "mecanica": "aislamiento",
+      "nivel": "principiante",
+      "gif": "gifs/elevaciones-laterales.gif",
+      "fuente": "free-exercise-db",
+      "fuenteId": "Side_Lateral_Raise",
+      "cues": "Aísla el deltoides lateral (da ancho al hombro). Codos levemente flexionados, subí los brazos a los lados hasta la altura de los hombros liderando con el codo. Poco peso y control.",
+      "commonError": "No uses impulso ni encojas los hombros con los trapecios."
+    },
+    {
+      "id": "face-pull",
+      "nombre": "Face pull",
+      "musculo": "hombros",
+      "musculosSecundarios": [
+        "espalda-media"
+      ],
+      "equipo": "polea",
+      "lugar": [
+        "gimnasio"
+      ],
+      "mecanica": "compuesto",
+      "nivel": "intermedio",
+      "gif": "gifs/face-pull.gif",
+      "fuente": "free-exercise-db",
+      "fuenteId": "Face_Pull",
+      "cues": "Deltoides posterior y espalda alta; clave para la salud del hombro y la postura. Polea a la altura de la cara, tirá la cuerda hacia la frente abriendo las manos y juntando los omóplatos.",
+      "commonError": "No tires demasiado abajo ni cargues tanto que pierdas la rotación externa."
+    },
+    {
+      "id": "curl-con-barra",
+      "nombre": "Curl con barra",
+      "musculo": "biceps",
+      "musculosSecundarios": [
+        "antebrazos"
+      ],
+      "equipo": "barra",
+      "lugar": [
+        "gimnasio"
+      ],
+      "mecanica": "aislamiento",
+      "nivel": "principiante",
+      "gif": "gifs/curl-con-barra.gif",
+      "fuente": "free-exercise-db",
+      "fuenteId": "Barbell_Curl",
+      "cues": "Aísla el bíceps. Codos pegados al cuerpo y fijos, subí la barra flexionando solo el codo y apretá arriba. Bajá controlado el rango completo.",
+      "commonError": "No balancees el torso ni adelantes los codos."
+    },
+    {
+      "id": "curl-con-mancuernas",
+      "nombre": "Curl con mancuernas",
+      "musculo": "biceps",
+      "musculosSecundarios": [
+        "antebrazos"
+      ],
+      "equipo": "mancuernas",
+      "lugar": [
+        "gimnasio",
+        "casa"
+      ],
+      "mecanica": "aislamiento",
+      "nivel": "principiante",
+      "gif": "gifs/curl-con-mancuernas.gif",
+      "fuente": "free-exercise-db",
+      "fuenteId": "Dumbbell_Bicep_Curl",
+      "cues": "Bíceps, permite girar la muñeca (supinar) para más contracción. Codos al costado, subí girando la palma hacia arriba y apretá. Bajá lento.",
+      "commonError": "No uses impulso de hombro o espalda; flexioná solo el codo."
+    },
+    {
+      "id": "curl-martillo",
+      "nombre": "Curl martillo",
+      "musculo": "biceps",
+      "musculosSecundarios": [],
+      "equipo": "mancuernas",
+      "lugar": [
+        "gimnasio",
+        "casa"
+      ],
+      "mecanica": "aislamiento",
+      "nivel": "principiante",
+      "gif": "gifs/curl-martillo.gif",
+      "fuente": "free-exercise-db",
+      "fuenteId": "Hammer_Curls",
+      "cues": "Bíceps y braquial/antebrazo (agarre neutro). Palmas enfrentadas todo el movimiento y codos fijos al costado. Subí controlado y apretá arriba.",
+      "commonError": "No balancees el cuerpo ni muevas los codos hacia adelante."
+    },
+    {
+      "id": "curl-en-polea",
+      "nombre": "Curl en polea",
+      "musculo": "biceps",
+      "musculosSecundarios": [],
+      "equipo": "polea",
+      "lugar": [
+        "gimnasio"
+      ],
+      "mecanica": "aislamiento",
+      "nivel": "principiante",
+      "gif": "gifs/curl-en-polea.gif",
+      "fuente": "free-exercise-db",
+      "fuenteId": "Standing_Biceps_Cable_Curl",
+      "cues": "Bíceps con tensión constante en todo el rango. Codos fijos al costado, flexioná llevando el agarre arriba y resistí la bajada sin soltar la tensión.",
+      "commonError": "No adelantes los codos ni te ayudes con el torso."
+    },
+    {
+      "id": "extension-de-triceps-en-polea",
+      "nombre": "Extensión de tríceps en polea",
+      "musculo": "triceps",
+      "musculosSecundarios": [],
+      "equipo": "polea",
+      "lugar": [
+        "gimnasio"
+      ],
+      "mecanica": "aislamiento",
+      "nivel": "principiante",
+      "gif": "gifs/extension-de-triceps-en-polea.gif",
+      "fuente": "free-exercise-db",
+      "fuenteId": "Triceps_Pushdown",
+      "cues": "Aísla el tríceps. Codos pegados al cuerpo y fijos, estirá hacia abajo hasta extender el codo y apretá. Solo se mueve el antebrazo.",
+      "commonError": "No despegues los codos del cuerpo ni empujes con el hombro."
+    },
+    {
+      "id": "press-frances",
+      "nombre": "Press francés",
+      "musculo": "triceps",
+      "musculosSecundarios": [],
+      "equipo": "barra-z",
+      "lugar": [
+        "gimnasio"
+      ],
+      "mecanica": "aislamiento",
+      "nivel": "intermedio",
+      "gif": "gifs/press-frances.gif",
+      "fuente": "free-exercise-db",
+      "fuenteId": "Lying_Triceps_Press",
+      "cues": "Tríceps, sobre todo la cabeza larga. Acostado, codos apuntando al techo y fijos, bajá la barra hacia la frente flexionando solo el codo y extendé. Movimiento lento.",
+      "commonError": "No abras los codos hacia afuera ni muevas los hombros."
+    },
+    {
+      "id": "extension-de-triceps-con-mancuerna",
+      "nombre": "Extensión de tríceps con mancuerna",
+      "musculo": "triceps",
+      "musculosSecundarios": [],
+      "equipo": "mancuernas",
+      "lugar": [
+        "gimnasio",
+        "casa"
+      ],
+      "mecanica": "aislamiento",
+      "nivel": "principiante",
+      "gif": "gifs/extension-de-triceps-con-mancuerna.gif",
+      "fuente": "free-exercise-db",
+      "fuenteId": "Standing_Dumbbell_Triceps_Extension",
+      "cues": "Tríceps por encima de la cabeza, con buen estiramiento de la cabeza larga. Codos apuntando arriba y cerca de la cabeza, bajá la mancuerna atrás y extendé.",
+      "commonError": "No abras los codos hacia los lados; perdés tensión en el tríceps."
+    },
+    {
+      "id": "fondos-en-banco",
+      "nombre": "Fondos en banco",
+      "musculo": "triceps",
+      "musculosSecundarios": [
+        "pecho",
+        "hombros"
+      ],
+      "equipo": "peso-corporal",
+      "lugar": [
+        "gimnasio",
+        "casa"
+      ],
+      "mecanica": "compuesto",
+      "nivel": "principiante",
+      "gif": "gifs/fondos-en-banco.gif",
+      "fuente": "free-exercise-db",
+      "fuenteId": "Bench_Dips",
+      "cues": "Tríceps con tu peso. Manos en el borde del banco, bajá flexionando los codos hacia atrás (no afuera) hasta ~90° y empujá. Mantené el cuerpo cerca del banco.",
+      "commonError": "No bajes de más forzando el hombro ni abras los codos."
+    },
+    {
+      "id": "sentadilla-con-barra",
+      "nombre": "Sentadilla con barra",
+      "musculo": "cuadriceps",
+      "musculosSecundarios": [
+        "gemelos",
+        "gluteos",
+        "isquiotibiales",
+        "espalda-baja"
+      ],
+      "equipo": "barra",
+      "lugar": [
+        "gimnasio"
+      ],
+      "mecanica": "compuesto",
+      "nivel": "principiante",
+      "gif": "gifs/sentadilla-con-barra.gif",
+      "fuente": "free-exercise-db",
+      "fuenteId": "Barbell_Squat",
+      "cues": "Cuádriceps, glúteos y core; ejercicio base de pierna. Pies al ancho de hombros y pecho arriba. Bajá llevando la cadera atrás hasta el muslo paralelo, rodillas en línea con los pies, y subí empujando con los talones.",
+      "commonError": "No metas las rodillas hacia adentro ni redondees la espalda baja."
+    },
+    {
+      "id": "prensa-de-piernas",
+      "nombre": "Prensa de piernas",
+      "musculo": "cuadriceps",
+      "musculosSecundarios": [
+        "gemelos",
+        "gluteos",
+        "isquiotibiales"
+      ],
+      "equipo": "maquina",
+      "lugar": [
+        "gimnasio"
+      ],
+      "mecanica": "compuesto",
+      "nivel": "principiante",
+      "gif": "gifs/prensa-de-piernas.gif",
+      "fuente": "free-exercise-db",
+      "fuenteId": "Leg_Press",
+      "cues": "Cuádriceps y glúteos en un patrón guiado y seguro para cargar peso. Pies al ancho de hombros, bajá hasta ~90° de rodilla y empujá sin bloquear de golpe.",
+      "commonError": "No bajes tanto que la lumbar se despegue y enrolle la cadera."
+    },
+    {
+      "id": "extensiones-de-cuadriceps",
+      "nombre": "Extensiones de cuádriceps",
+      "musculo": "cuadriceps",
+      "musculosSecundarios": [],
+      "equipo": "maquina",
+      "lugar": [
+        "gimnasio"
+      ],
+      "mecanica": "aislamiento",
+      "nivel": "principiante",
+      "gif": "gifs/extensiones-de-cuadriceps.gif",
+      "fuente": "free-exercise-db",
+      "fuenteId": "Leg_Extensions",
+      "cues": "Aísla el cuádriceps. Espalda apoyada, extendé las rodillas hasta arriba y apretá el muslo un segundo. Bajá controlado sin dejar caer el peso.",
+      "commonError": "No uses impulso ni cargues tanto que la rodilla reciba tirones."
+    },
+    {
+      "id": "sentadilla-goblet",
+      "nombre": "Sentadilla goblet",
+      "musculo": "cuadriceps",
+      "musculosSecundarios": [
+        "gemelos",
+        "gluteos",
+        "isquiotibiales",
+        "hombros"
+      ],
+      "equipo": "kettlebell",
+      "lugar": [
+        "gimnasio",
+        "casa"
+      ],
+      "mecanica": "compuesto",
+      "nivel": "principiante",
+      "gif": "gifs/sentadilla-goblet.gif",
+      "fuente": "free-exercise-db",
+      "fuenteId": "Goblet_Squat",
+      "cues": "Cuádriceps y glúteos sosteniendo una pesa al pecho; enseña buena postura de sentadilla. Pecho arriba, bajá entre las rodillas con los talones en el piso.",
+      "commonError": "No inclines el torso hacia adelante ni levantes los talones."
+    },
+    {
+      "id": "zancadas-con-mancuernas",
+      "nombre": "Zancadas con mancuernas",
+      "musculo": "cuadriceps",
+      "musculosSecundarios": [
+        "gemelos",
+        "gluteos",
+        "isquiotibiales"
+      ],
+      "equipo": "mancuernas",
+      "lugar": [
+        "gimnasio",
+        "casa"
+      ],
+      "mecanica": "compuesto",
+      "nivel": "principiante",
+      "gif": "gifs/zancadas-con-mancuernas.gif",
+      "fuente": "free-exercise-db",
+      "fuenteId": "Dumbbell_Lunges",
+      "cues": "Cuádriceps y glúteos; trabaja una pierna y el equilibrio. Da un paso al frente y bajá la rodilla de atrás hacia el piso con el torso erguido.",
+      "commonError": "No dejes que la rodilla de adelante pase la punta del pie ni se vaya hacia adentro."
+    },
+    {
+      "id": "peso-muerto-rumano",
+      "nombre": "Peso muerto rumano",
+      "musculo": "isquiotibiales",
+      "musculosSecundarios": [
+        "gemelos",
+        "gluteos",
+        "espalda-baja"
+      ],
+      "equipo": "barra",
+      "lugar": [
+        "gimnasio"
+      ],
+      "mecanica": "compuesto",
+      "nivel": "intermedio",
+      "gif": "gifs/peso-muerto-rumano.gif",
+      "fuente": "free-exercise-db",
+      "fuenteId": "Romanian_Deadlift",
+      "cues": "Isquiotibiales y glúteos con bisagra de cadera. Piernas casi rectas (rodilla blanda), llevá la cadera atrás bajando la barra pegada a las piernas hasta sentir estiramiento. Espalda recta siempre.",
+      "commonError": "No redondees la espalda baja ni flexiones las rodillas como en sentadilla."
+    },
+    {
+      "id": "curl-femoral-acostado",
+      "nombre": "Curl femoral acostado",
+      "musculo": "isquiotibiales",
+      "musculosSecundarios": [],
+      "equipo": "maquina",
+      "lugar": [
+        "gimnasio"
+      ],
+      "mecanica": "aislamiento",
+      "nivel": "principiante",
+      "gif": "gifs/curl-femoral-acostado.gif",
+      "fuente": "free-exercise-db",
+      "fuenteId": "Lying_Leg_Curls",
+      "cues": "Aísla el isquiotibial. Boca abajo, flexioná las rodillas llevando los talones hacia los glúteos y apretá arriba. Bajá controlado.",
+      "commonError": "No levantes la cadera del banco para ayudarte con impulso."
+    },
+    {
+      "id": "buenos-dias",
+      "nombre": "Buenos días",
+      "musculo": "isquiotibiales",
+      "musculosSecundarios": [
+        "abdominales",
+        "gluteos",
+        "espalda-baja"
+      ],
+      "equipo": "barra",
+      "lugar": [
+        "gimnasio"
+      ],
+      "mecanica": "compuesto",
+      "nivel": "intermedio",
+      "gif": "gifs/buenos-dias.gif",
+      "fuente": "free-exercise-db",
+      "fuenteId": "Good_Morning",
+      "cues": "Isquiotibiales, glúteos y lumbar. Barra en la espalda alta, bisagra de cadera hacia atrás con espalda recta hasta el torso casi paralelo, y subí apretando glúteos. Usá poco peso.",
+      "commonError": "No redondees la espalda ni lo conviertas en sentadilla flexionando las rodillas."
+    },
+    {
+      "id": "peso-muerto-rumano-con-mancuernas",
+      "nombre": "Peso muerto rumano con mancuernas",
+      "musculo": "isquiotibiales",
+      "musculosSecundarios": [
+        "gluteos",
+        "espalda-baja"
+      ],
+      "equipo": "mancuernas",
+      "lugar": [
+        "gimnasio",
+        "casa"
+      ],
+      "mecanica": "compuesto",
+      "nivel": "principiante",
+      "gif": "gifs/peso-muerto-rumano-con-mancuernas.gif",
+      "fuente": "free-exercise-db",
+      "fuenteId": "Stiff-Legged_Dumbbell_Deadlift",
+      "cues": "Isquiotibiales y glúteos; versión accesible para casa. Mancuernas adelante de los muslos, cadera atrás bajando pegado a las piernas con espalda recta, y subí apretando glúteos.",
+      "commonError": "No alejes las mancuernas del cuerpo ni redondees la espalda."
+    },
+    {
+      "id": "hip-thrust-con-barra",
+      "nombre": "Hip thrust con barra",
+      "musculo": "gluteos",
+      "musculosSecundarios": [
+        "gemelos",
+        "isquiotibiales"
+      ],
+      "equipo": "barra",
+      "lugar": [
+        "gimnasio"
+      ],
+      "mecanica": "compuesto",
+      "nivel": "intermedio",
+      "gif": "gifs/hip-thrust-con-barra.gif",
+      "fuente": "free-exercise-db",
+      "fuenteId": "Barbell_Hip_Thrust",
+      "cues": "El ejercicio rey de glúteos. Espalda alta apoyada en el banco y barra sobre la cadera; empujá con los talones hasta alinear torso y muslos, apretando glúteos arriba con el mentón metido.",
+      "commonError": "No hiperextiendas la lumbar arriba; apretá los glúteos."
+    },
+    {
+      "id": "puente-de-gluteos",
+      "nombre": "Puente de glúteos",
+      "musculo": "gluteos",
+      "musculosSecundarios": [
+        "isquiotibiales"
+      ],
+      "equipo": "peso-corporal",
+      "lugar": [
+        "gimnasio",
+        "casa"
+      ],
+      "mecanica": "aislamiento",
+      "nivel": "principiante",
+      "gif": "gifs/puente-de-gluteos.gif",
+      "fuente": "free-exercise-db",
+      "fuenteId": "Butt_Lift_Bridge",
+      "cues": "Glúteos con tu peso; ideal para activar y para casa. Pies cerca de los glúteos, empujá la cadera arriba apretando los glúteos hasta alinear el cuerpo y bajá controlado.",
+      "commonError": "No empujes arqueando la lumbar en vez de apretar glúteos."
+    },
+    {
+      "id": "patada-de-gluteo",
+      "nombre": "Patada de glúteo",
+      "musculo": "gluteos",
+      "musculosSecundarios": [
+        "isquiotibiales"
+      ],
+      "equipo": "peso-corporal",
+      "lugar": [
+        "gimnasio",
+        "casa"
+      ],
+      "mecanica": "compuesto",
+      "nivel": "principiante",
+      "gif": "gifs/patada-de-gluteo.gif",
+      "fuente": "free-exercise-db",
+      "fuenteId": "Glute_Kickback",
+      "cues": "Aísla el glúteo de cada lado. En cuadrupedia o de pie, llevá la pierna atrás extendiendo la cadera y apretá el glúteo arriba con un movimiento corto y controlado.",
+      "commonError": "No arquees la espalda baja para subir más la pierna."
+    },
+    {
+      "id": "elevacion-de-talones-de-pie",
+      "nombre": "Elevación de talones de pie",
+      "musculo": "gemelos",
+      "musculosSecundarios": [],
+      "equipo": "maquina",
+      "lugar": [
+        "gimnasio"
+      ],
+      "mecanica": "aislamiento",
+      "nivel": "principiante",
+      "gif": "gifs/elevacion-de-talones-de-pie.gif",
+      "fuente": "free-exercise-db",
+      "fuenteId": "Standing_Calf_Raises",
+      "cues": "Gemelos (gastrocnemio). De pie, subí sobre las puntas lo más alto posible y apretá arriba un segundo. Bajá lento sintiendo el estiramiento, con rango completo.",
+      "commonError": "No hagas rebotes cortos sin rango ni pausa arriba."
+    },
+    {
+      "id": "elevacion-de-talones-sentado",
+      "nombre": "Elevación de talones sentado",
+      "musculo": "gemelos",
+      "musculosSecundarios": [],
+      "equipo": "maquina",
+      "lugar": [
+        "gimnasio"
+      ],
+      "mecanica": "aislamiento",
+      "nivel": "principiante",
+      "gif": "gifs/elevacion-de-talones-sentado.gif",
+      "fuente": "free-exercise-db",
+      "fuenteId": "Seated_Calf_Raise",
+      "cues": "Sóleo (gemelo profundo), por la rodilla flexionada. Sentado con el peso sobre las rodillas, subí los talones apretando arriba y bajá controlado el rango completo.",
+      "commonError": "No hagas rango corto y rápido sin contraer arriba."
+    },
+    {
+      "id": "elevacion-de-talones-con-mancuerna",
+      "nombre": "Elevación de talones con mancuerna",
+      "musculo": "gemelos",
+      "musculosSecundarios": [],
+      "equipo": "mancuernas",
+      "lugar": [
+        "gimnasio",
+        "casa"
+      ],
+      "mecanica": "aislamiento",
+      "nivel": "intermedio",
+      "gif": "gifs/elevacion-de-talones-con-mancuerna.gif",
+      "fuente": "free-exercise-db",
+      "fuenteId": "Standing_Dumbbell_Calf_Raise",
+      "cues": "Gemelos; versión simple para casa. Parado (mejor sobre un escalón) con una mancuerna en la mano, subí sobre la punta del pie y apretá. Bajá lento buscando estiramiento.",
+      "commonError": "No uses un apoyo inestable ni rebotes sin control."
+    },
+    {
+      "id": "plancha",
+      "nombre": "Plancha",
+      "musculo": "abdominales",
+      "musculosSecundarios": [],
+      "equipo": "peso-corporal",
+      "lugar": [
+        "gimnasio",
+        "casa"
+      ],
+      "mecanica": "aislamiento",
+      "nivel": "principiante",
+      "gif": "gifs/plancha.gif",
+      "fuente": "free-exercise-db",
+      "fuenteId": "Plank",
+      "cues": "Core, abdomen profundo y estabilidad. Antebrazos bajo los hombros y cuerpo en línea recta; apretá abdomen y glúteos y respirá normal. Sostené el tiempo sin perder la línea.",
+      "commonError": "No hundas la cadera ni levantes los glúteos rompiendo la línea."
+    },
+    {
+      "id": "crunch-abdominal",
+      "nombre": "Crunch abdominal",
+      "musculo": "abdominales",
+      "musculosSecundarios": [],
+      "equipo": "peso-corporal",
+      "lugar": [
+        "gimnasio",
+        "casa"
+      ],
+      "mecanica": "aislamiento",
+      "nivel": "principiante",
+      "gif": "gifs/crunch-abdominal.gif",
+      "fuente": "free-exercise-db",
+      "fuenteId": "Crunches",
+      "cues": "Recto abdominal. Acostado, llevá los hombros hacia las rodillas enrollando el tronco y apretá el abdomen arriba. Bajá controlado.",
+      "commonError": "No tires de la nuca con las manos; usá el abdomen."
+    },
+    {
+      "id": "elevacion-de-piernas-colgado",
+      "nombre": "Elevación de piernas colgado",
+      "musculo": "abdominales",
+      "musculosSecundarios": [],
+      "equipo": "peso-corporal",
+      "lugar": [
+        "gimnasio",
+        "casa"
+      ],
+      "mecanica": "aislamiento",
+      "nivel": "avanzado",
+      "gif": "gifs/elevacion-de-piernas-colgado.gif",
+      "fuente": "free-exercise-db",
+      "fuenteId": "Hanging_Leg_Raise",
+      "cues": "Abdomen bajo (avanzado). Colgado de la barra, subí las piernas sin balanceo enrollando un poco la pelvis y bajá lento. Si cuesta, flexioná las rodillas.",
+      "commonError": "No uses balanceo tipo péndulo en vez del control del abdomen."
+    },
+    {
+      "id": "rueda-abdominal",
+      "nombre": "Rueda abdominal",
+      "musculo": "abdominales",
+      "musculosSecundarios": [
+        "hombros"
+      ],
+      "equipo": "otro",
+      "lugar": [
+        "gimnasio",
+        "casa"
+      ],
+      "mecanica": "compuesto",
+      "nivel": "intermedio",
+      "gif": "gifs/rueda-abdominal.gif",
+      "fuente": "free-exercise-db",
+      "fuenteId": "Ab_Roller",
+      "cues": "Core completo en anti-extensión (intermedio). Desde rodillas, rodá hacia adelante con abdomen y glúteos firmes y la lumbar neutra, y volvé sin arquear. Empezá con rango corto.",
+      "commonError": "No dejes caer la cadera ni arquees la lumbar al extenderte."
+    }
+  ]
+}

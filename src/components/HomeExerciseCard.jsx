@@ -1,12 +1,16 @@
 import { useState } from 'react'
 
 function GifOrPlaceholder({ exercise }) {
+  const nombre  = exercise.nombre ?? exercise.name ?? exercise.id
+  const muscles = exercise.muscles
+    ?? [exercise.musculo, ...(exercise.musculosSecundarios ?? [])].join(', ')
+
   if (exercise.gif) {
     return (
       <div className="rounded-xl overflow-hidden bg-slate-800 border border-slate-700">
         <img
           src={exercise.gif}
-          alt={exercise.name}
+          alt={nombre}
           className="w-full object-cover"
           style={{ maxHeight: '160px' }}
         />
@@ -16,14 +20,19 @@ function GifOrPlaceholder({ exercise }) {
   return (
     <div className="rounded-xl bg-slate-800 border border-slate-700 h-20
                     flex flex-col items-center justify-center gap-1">
-      <span className="text-3xl">{exercise.placeholder}</span>
-      <span className="text-xs text-slate-500">{exercise.muscles}</span>
+      <span className="text-3xl">{exercise.placeholder ?? '💪'}</span>
+      <span className="text-xs text-slate-500">{muscles}</span>
     </div>
   )
 }
 
 export default function HomeExerciseCard({ block, exercise, prevEntry, onAddSet, onUpdateSet, onRemove }) {
+  // Soporta tanto el formato viejo (name, type) como el nuevo del catálogo (nombre, equipo)
+  const nombre      = exercise.nombre ?? exercise.name ?? exercise.id
+  const muscles     = exercise.muscles
+    ?? [exercise.musculo, ...(exercise.musculosSecundarios ?? [])].join(', ')
   const isBodyweight = exercise.type === 'reps'
+    || exercise.equipo === 'peso-corporal'
   const [reps, setReps] = useState('')
   const [kg,   setKg]   = useState(exercise.defaultWeight != null ? String(exercise.defaultWeight) : '')
 
@@ -38,7 +47,7 @@ export default function HomeExerciseCard({ block, exercise, prevEntry, onAddSet,
       {/* Header */}
       <div className="flex items-start justify-between px-4 pt-4 pb-3">
         <div className="flex-1 pr-3">
-          <p className="font-bold text-slate-100">{exercise.name}</p>
+          <p className="font-bold text-slate-100">{nombre}</p>
           <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">{exercise.cues}</p>
           <p className="text-xs text-amber-500 mt-1">⚠️ {exercise.commonError}</p>
         </div>

@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useHomeWorkoutSession }   from '../hooks/useHomeWorkoutSession'
-import { getHomeExerciseById }     from '../data/homeExercises'
-import { WORKOUT_PLAN }            from '../data/workoutPlan'
+import { resolverEjercicio }       from '../services/rutinaService'
+import { getRutina }               from '../services/rutinaService'
 import { formatDuration, formatVolume } from '../utils/format'
 import HomeExercisePicker          from '../components/HomeExercisePicker'
 import HomeExerciseCard            from '../components/HomeExerciseCard'
@@ -11,7 +11,8 @@ import HomeExerciseCard            from '../components/HomeExerciseCard'
 
 function ModeSelector({ nextDayIndex, onSelect }) {
   const [confirming, setConfirming] = useState(false)
-  const day = WORKOUT_PLAN[nextDayIndex]
+  const rutina = getRutina()
+  const day    = rutina[nextDayIndex]
 
   if (confirming) {
     return (
@@ -207,7 +208,7 @@ export default function HomeWorkout() {
       )}
 
       {blocks.map(block => {
-        const exercise = getHomeExerciseById(block.exerciseId)
+        const exercise = resolverEjercicio(block.exerciseId)
         if (!exercise) return null
         return (
           <HomeExerciseCard

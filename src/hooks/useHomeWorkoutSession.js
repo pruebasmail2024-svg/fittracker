@@ -1,14 +1,15 @@
 import { useState, useCallback } from 'react'
 import { getAllSessions, saveWorkoutSession } from '../services/workoutService'
-import { ALL_HOME_EXERCISES } from '../data/homeExercises'
+import { filtrarEjercicios } from './useEjerciciosCatalogo'
 
 let _instanceCounter = 0
 
 /** Carga el último registro de cada ejercicio en casa para sobrecarga progresiva. */
 async function loadPrevData() {
-  const all = await getAllSessions()
+  const all         = await getAllSessions()
+  const casaEjs     = filtrarEjercicios({ lugar: 'casa' })
   const map = {}
-  ALL_HOME_EXERCISES.forEach(ex => {
+  casaEjs.forEach(ex => {
     const last = [...all]
       .filter(s => s.exercises?.some(e => e.exerciseId === ex.id))
       .at(-1)

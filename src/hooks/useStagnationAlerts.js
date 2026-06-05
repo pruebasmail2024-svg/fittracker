@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
 import { getAllSessions } from '../services/workoutService'
 import { detectStagnation } from '../services/analyticsService'
-import { WORKOUT_PLAN } from '../data/workoutPlan'
+import { getRutina } from '../services/rutinaService'
 
 /**
  * Devuelve un mapa { exerciseId: boolean } indicando qué ejercicios
  * tienen estancamiento en las últimas 3 sesiones de su día correspondiente.
+ * Lee la rutina activa del usuario (personalizada o default).
  */
 export function useStagnationAlerts() {
   const [alerts, setAlerts]   = useState({})
@@ -14,11 +15,10 @@ export function useStagnationAlerts() {
   useEffect(() => {
     getAllSessions().then(sessions => {
       const result = {}
-      WORKOUT_PLAN.forEach(day => {
-        day.pairs.forEach(pair => {
-          pair.exercises.forEach(ex => {
-            result[ex.id] = detectStagnation(ex.id, day.dayIndex, sessions)
-          })
+      const rutina = getRutina()
+      rutina.forEach(day => {
+        day.slots.forEach(slot => {
+          result[slot.exerciseId] = detectStagnation(slot.exerciseId, day.dayIndex, sessions)
         })
       })
       setAlerts(result)

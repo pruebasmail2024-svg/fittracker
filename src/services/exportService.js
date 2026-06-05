@@ -3,6 +3,7 @@ import { getAllWeightLogs }  from './weightService'
 import { getAllSessions }    from './workoutService'
 import { getWeeklyScores }  from './consistencyService'
 import { markBackupDownloaded } from './notificationService'
+import { resolverEjercicio } from './rutinaService'
 
 // ─── Helpers CSV ──────────────────────────────────────────────────────────────
 
@@ -40,20 +41,22 @@ function buildEntrenamientosCSV(sessions) {
     const tipo       = session.sessionType ?? 'gym'
     session.exercises.forEach(ex => {
       ex.sets.forEach((set, i) => {
+        const ejercicioMeta = resolverEjercicio(ex.exerciseId)
         rows.push({
           fecha,
-          dia:           session.dayIndex ?? '',
-          ejercicio:     ex.exerciseId,
-          serie_numero:  i + 1,
-          peso_kg:       set.weightKg,
-          repeticiones:  set.reps,
-          tipo_sesion:   tipo,
+          dia:              session.dayIndex ?? '',
+          ejercicio_id:     ex.exerciseId,
+          ejercicio_nombre: ejercicioMeta?.nombre ?? ex.exerciseId,
+          serie_numero:     i + 1,
+          peso_kg:          set.weightKg,
+          repeticiones:     set.reps,
+          tipo_sesion:      tipo,
         })
       })
     })
   })
   return toCSV(
-    ['fecha', 'dia', 'ejercicio', 'serie_numero', 'peso_kg', 'repeticiones', 'tipo_sesion'],
+    ['fecha', 'dia', 'ejercicio_id', 'ejercicio_nombre', 'serie_numero', 'peso_kg', 'repeticiones', 'tipo_sesion'],
     rows
   )
 }

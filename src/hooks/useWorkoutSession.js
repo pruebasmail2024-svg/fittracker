@@ -1,13 +1,7 @@
 import { useState, useCallback, useEffect } from 'react'
-import { WORKOUT_PLAN } from '../data/workoutPlan'
+import { getDiaParaSesion } from '../services/rutinaService'
 import { saveWorkoutSession, getAllSessions } from '../services/workoutService'
 import { useRestTimer } from './useRestTimer'
-
-function flattenExercises(day) {
-  return day.pairs.flatMap(pair =>
-    pair.exercises.map(ex => ({ ...ex, pairLabel: pair.exercises.map(e => e.name).join(' + ') }))
-  )
-}
 
 async function buildLastDataMap(exercises) {
   const allSessions = await getAllSessions()
@@ -37,8 +31,7 @@ export function useWorkoutSession() {
   const totalSets       = currentExercise?.sets ?? 0
 
   const startDay = useCallback(async (idx) => {
-    const day      = WORKOUT_PLAN[idx]
-    const flat     = flattenExercises(day)
+    const flat     = getDiaParaSesion(idx)
     const lastData = await buildLastDataMap(flat)
 
     setDayIndex(idx)

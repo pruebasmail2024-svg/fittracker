@@ -7,6 +7,7 @@ import {
 } from '../services/notificationService'
 import { generateAndDownloadBackup } from '../services/exportService'
 import { parseBackupZip, confirmImport } from '../services/importService'
+import MiRutina from '../components/MiRutina'
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 
@@ -275,6 +276,14 @@ export default function Configuracion() {
             </p>
           </>
         )}
+      </SectionCard>
+
+      {/* ── Mi Rutina ── */}
+      <SectionCard title="📋 Mi Rutina">
+        <p className="text-xs text-slate-500 -mt-2">
+          Personaliza los ejercicios de cada día. Tu historial no se pierde al cambiar.
+        </p>
+        <MiRutina />
       </SectionCard>
 
       {/* ── Mis Datos ── */}

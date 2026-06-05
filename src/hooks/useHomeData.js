@@ -3,7 +3,7 @@ import { getProfile }             from '../services/profileService'
 import { getAllSessions }          from '../services/workoutService'
 import { getAllWeightLogs }        from '../services/weightService'
 import { getSettings, shouldShowBackupReminder } from '../services/notificationService'
-import { ALL_EXERCISES }           from '../data/workoutPlan'
+import { resolverEjercicio }       from '../services/rutinaService'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -60,7 +60,7 @@ function findBestProgress(sessions) {
 
   if (!bestId || bestDelta <= 0) return null
   return {
-    name:    ALL_EXERCISES.find(e => e.id === bestId)?.name ?? bestId,
+    name:    resolverEjercicio(bestId)?.nombre ?? bestId,
     delta:   bestDelta,
     lastMax: bestLastMax,
   }
