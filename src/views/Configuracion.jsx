@@ -8,6 +8,7 @@ import {
 import { generateAndDownloadBackup } from '../services/exportService'
 import { parseBackupZip, confirmImport } from '../services/importService'
 import MiRutina from '../components/MiRutina'
+import { useAuth } from '../contexts/AuthContext'
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 
@@ -89,8 +90,10 @@ function DeniedInstructions() {
 // ─── Vista principal ──────────────────────────────────────────────────────────
 
 export default function Configuracion() {
-  const [permission, setPermission] = useState(getPermissionStatus)
-  const [settings, setSettings]     = useState(getSettings)
+  const { user, signOut }            = useAuth()
+  const [permission, setPermission]  = useState(getPermissionStatus)
+  const [settings, setSettings]      = useState(getSettings)
+  const [signOutConfirm, setSignOutConfirm] = useState(false)
 
   // Estados para exportar / importar
   const [exportLoading, setExportLoading] = useState(false)
@@ -427,6 +430,45 @@ export default function Configuracion() {
           Tema de color · Unidades (kg/lb) · Borrar historial
         </p>
       </div>
+
+      {/* ── Cuenta ── */}
+      <SectionCard title="👤 Cuenta">
+        <Row label="Email">
+          <span className="text-sm text-slate-300 truncate max-w-[180px]">{user?.email}</span>
+        </Row>
+
+        {!signOutConfirm ? (
+          <button
+            onClick={() => setSignOutConfirm(true)}
+            className="w-full rounded-xl border border-slate-600 py-3 text-sm font-semibold
+                       text-slate-400 active:bg-slate-800 transition-colors"
+          >
+            Cerrar sesión
+          </button>
+        ) : (
+          <div className="flex flex-col gap-2">
+            <p className="text-xs text-slate-400 text-center">
+              ¿Cerrar sesión? Tus datos locales no se borran.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={signOut}
+                className="flex-1 rounded-xl bg-red-500/20 border border-red-500/30 py-3
+                           text-sm font-bold text-red-400 active:bg-red-500/30 transition-colors"
+              >
+                Sí, cerrar sesión
+              </button>
+              <button
+                onClick={() => setSignOutConfirm(false)}
+                className="flex-1 rounded-xl border border-slate-600 py-3 text-sm
+                           text-slate-400 active:bg-slate-800 transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        )}
+      </SectionCard>
     </div>
   )
 }

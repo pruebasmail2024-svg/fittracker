@@ -1,7 +1,8 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { useProfile } from './hooks/useProfile'
-import { addWeightLog } from './services/weightService'
-import { createWeightLog } from './models/weightLog'
+import { AuthProvider, useAuth }  from './contexts/AuthContext'
+import { useProfile }             from './hooks/useProfile'
+import { addWeightLog }           from './services/weightService'
+import { createWeightLog }        from './models/weightLog'
 import AppShell              from './layout/AppShell'
 import Onboarding            from './views/Onboarding'
 import Home                  from './views/Home'
@@ -12,11 +13,16 @@ import Longevidad            from './views/Longevidad'
 import EnRadar               from './views/EnRadar'
 import Configuracion         from './views/Configuracion'
 import ProactiveWeightModal  from './components/ProactiveWeightModal'
+import Auth                  from './views/Auth'
 
-export default function App() {
-  const { profile, loading, saveProfile } = useProfile()
+function AppRoutes() {
+  const { user }                           = useAuth()
+  const { profile, loading, saveProfile }  = useProfile()
 
-  // Mientras IndexedDB responde, evitamos el flash de onboarding
+  // Usuario no autenticado → solo pantalla de login/registro
+  if (!user) return <Auth />
+
+  // Autenticado pero IndexedDB todavía cargando → spinner
   if (loading) {
     return (
       <div className="flex items-center justify-center h-dvh bg-slate-950">
@@ -25,11 +31,10 @@ export default function App() {
     )
   }
 
-  // Sin perfil → onboarding
+  // Autenticado pero sin perfil → onboarding
   if (!profile) {
     async function handleOnboardingComplete(formData) {
       await saveProfile(formData)
-      // El peso del onboarding es el primer registro del historial
       await addWeightLog(createWeightLog({ weightKg: formData.weightKg }))
     }
     return (
@@ -39,7 +44,7 @@ export default function App() {
     )
   }
 
-  // Con perfil → app completa
+  // Autenticado + con perfil → app completa
   return (
     <BrowserRouter>
       <AppShell>
@@ -47,14 +52,21 @@ export default function App() {
           <Route path="/"              element={<Home />} />
           <Route path="/entrenar"      element={<Entrenar />} />
           <Route path="/entrenar-casa" element={<HomeWorkout />} />
-          <Route path="/historial"  element={<Historial />} />
-          <Route path="/longevidad" element={<Longevidad />} />
-          <Route path="/en-radar"   element={<EnRadar />} />
-          <Route path="/config"     element={<Configuracion />} />
+          <Route path="/historial"     element={<Historial />} />
+          <Route path="/longevidad"    element={<Longevidad />} />
+          <Route path="/en-radar"      element={<EnRadar />} />
+          <Route path="/config"        element={<Configuracion />} />
         </Routes>
       </AppShell>
-      {/* Modal proactivo: se muestra si pasaron >15 días sin registrar peso */}
       <ProactiveWeightModal />
     </BrowserRouter>
+  )
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppRoutes />
+    </AuthProvider>
   )
 }
