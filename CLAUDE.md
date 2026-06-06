@@ -58,7 +58,8 @@ git commit -m "descripción"
 git push   # Vercel detecta el push y deploya en 1-2 min
 ```
 
-Los usuarios en el celular reciben la nueva versión la próxima vez que abren la app.
+Los usuarios en el celular reciben la nueva versión la próxima vez que abren la app
+(el Service Worker detecta el cambio en segundo plano).
 
 ---
 
@@ -82,38 +83,57 @@ cacheados por el Service Worker.
 
 ```
 src/
-├── components/        # Componentes reutilizables
+├── components/
+│   ├── ExerciseCard.jsx          # GIF + cues + error común durante sesión de gym
+│   ├── ExerciseSelector.jsx      # Selector con ejercicios del historial (desde catálogo)
+│   ├── HomeExerciseCard.jsx      # Card de ejercicio en sesión de casa (editable)
+│   ├── HomeExercisePicker.jsx    # Modal selector con catálogo filtrado por casa
+│   ├── MiRutina.jsx              # Sección de Configuración para personalizar rutina
+│   ├── ModalConfirmarBorrado.jsx # Confirmación antes de borrar sesión
+│   ├── ModalDetalleSesion.jsx    # Detalle completo de sesión con botón editar
+│   ├── ModalEditarSesion.jsx     # Edición in-place de series de una sesión
+│   ├── Toast.jsx                 # Feedback temporal (2.5s)
+│   └── [otros componentes UI]
 ├── data/
-│   ├── workoutPlan.js      # Rutina de gym de 3 días (estática, 12 ejercicios)
-│   └── homeExercises.js    # Catálogo de ejercicios en casa (8 ejercicios)
-├── hooks/             # Custom hooks de React
+│   ├── ejercicios.json           # Catálogo único de 41 ejercicios (FUENTE DE VERDAD)
+│   ├── workoutPlan.js            # Rutina original de 3 días — SOLO LECTURA, no modificar
+│   └── homeExercises.js          # Catálogo viejo de casa — SOLO LECTURA, no modificar
+├── hooks/
+│   ├── useEjerciciosCatalogo.js  # filtrarPor(), buscarPorId(), useEjerciciosCatalogo()
+│   ├── useExerciseHistory.js     # Evolución de un ejercicio por exerciseId
+│   ├── useHomeData.js            # Datos del dashboard Home + reload()
+│   ├── useHomeWorkoutSession.js  # Estado de sesión libre en casa
+│   ├── useStagnationAlerts.js    # Detecta estancamiento en la rutina activa
+│   ├── useWorkoutSession.js      # Estado de sesión de gym (lee de rutinaService)
+│   └── [otros hooks]
 ├── layout/
-│   └── AppShell.jsx        # Header + nav inferior (6 tabs) + banners
-├── models/            # Factories de objetos para IndexedDB
+│   └── AppShell.jsx              # Header + nav inferior (6 tabs) + banners
+├── models/
 │   ├── profile.js
 │   ├── weightLog.js
-│   └── workoutSession.js   # sessionType: 'gym'|'home_replacement'|'home_extra'
-├── services/          # Capa de datos (IndexedDB + localStorage)
-│   ├── analyticsService.js  # detectStagnation, generateWeightProjection, ROTATION_VARIANTS
+│   └── workoutSession.js         # sessionType: 'gym'|'home_replacement'|'home_extra'
+├── services/
+│   ├── analyticsService.js       # detectStagnation, generateWeightProjection, ROTATION_VARIANTS
 │   ├── consistencyService.js
-│   ├── db.js               # openDB con 5 stores
-│   ├── exportService.js
+│   ├── db.js                     # openDB con 5 stores (IndexedDB)
+│   ├── exportService.js          # ZIP con 3 CSVs (incluye ejercicio_nombre)
 │   ├── importService.js
 │   ├── notificationService.js
 │   ├── profileService.js
+│   ├── rutinaService.js          # Rutina personalizable en localStorage (VER ABAJO)
 │   ├── weightService.js
-│   └── workoutService.js
+│   └── workoutService.js         # CRUD de sesiones: save, getAll, update, delete
 ├── utils/
-│   ├── date.js             # Formateo de fechas en es-AR
-│   └── format.js           # formatDuration, formatVolume
+│   ├── date.js                   # Formateo de fechas en es-AR
+│   └── format.js                 # formatDuration, formatVolume
 └── views/
-    ├── Configuracion.jsx
-    ├── EnRadar.jsx
-    ├── Entrenar.jsx
-    ├── Historial.jsx
-    ├── Home.jsx
-    ├── HomeWorkout.jsx     # Sesión de entrenamiento en casa
-    ├── Longevidad.jsx
+    ├── Configuracion.jsx         # Notificaciones + Mi Rutina + Mis Datos
+    ├── EnRadar.jsx               # Placeholder nutrición y sueño
+    ├── Entrenar.jsx              # Sesión de gym con GIFs, sets, cronómetros
+    ├── Historial.jsx             # Peso vs proyección + evolución + lista de sesiones
+    ├── Home.jsx                  # Dashboard principal
+    ├── HomeWorkout.jsx           # Sesión libre en casa
+    ├── Longevidad.jsx            # Score de consistencia semanal + peso
     └── Onboarding.jsx
 ```
 
@@ -125,89 +145,135 @@ src/
 |---|---|---|
 | Home | `/` | Dashboard: próxima sesión, métricas, alertas, racha |
 | Entrenar | `/entrenar` | Sesión de gym con GIFs, sets, cronómetros |
-| Entrenar en Casa | `/entrenar-casa` | Sesión libre con catálogo de ejercicios en casa |
-| Historial | `/historial` | Peso vs proyección + evolución por ejercicio + lista de sesiones |
+| Entrenar en Casa | `/entrenar-casa` | Sesión libre con catálogo filtrado por lugar: casa |
+| Historial | `/historial` | Peso vs proyección + evolución por ejercicio + sesiones editables |
 | Longevidad | `/longevidad` | Score de consistencia semanal + seguimiento de peso |
 | En Radar | `/en-radar` | Placeholders nutrición y sueño (próximamente) |
-| Configuración | `/config` | Notificaciones + Mis Datos (export/import) |
+| Configuración | `/config` | Notificaciones + Mi Rutina + Mis Datos (export/import) |
 
 ---
 
 ## Funcionalidades del MVP
 
+### Catálogo de ejercicios (`src/data/ejercicios.json`)
+- **41 ejercicios** con GIFs optimizados (121–175 KB c/u) en `public/exercises/`
+- Cada ejercicio tiene: `id`, `nombre`, `musculo`, `musculosSecundarios`, `equipo`,
+  `lugar`, `mecanica`, `nivel`, `gif`, `cues`, `commonError`
+- Filtros disponibles: `musculo`, `equipo`, `lugar` (`'gimnasio'`|`'casa'`)
+- Acceso via hook: `useEjerciciosCatalogo()` → `filtrarPor()`, `buscarPorId()`
+- Resolución de ID a objeto: `resolverEjercicio(id)` en `rutinaService.js`
+
+### Rutina personalizable (`src/services/rutinaService.js`)
+- La rutina de 3 días se guarda en **localStorage** bajo `fittracker_rutina`
+- Si el usuario nunca personalizó → devuelve la rutina default (mismos 12 ejercicios
+  mapeados a los nuevos IDs del catálogo)
+- **Mapa de compatibilidad** de IDs viejos → nuevos:
+  `squat` → `sentadilla-con-barra`, `bench-press` → `press-de-banca-con-barra`,
+  `lat-pulldown` → `jalon-al-pecho`, `romanian-deadlift` → `peso-muerto-rumano`,
+  `overhead-press` → `press-militar-con-barra`, `barbell-row` → `remo-con-barra`,
+  `plank` → `plancha`, `lunge` → `zancadas-con-mancuernas`,
+  `bicep-curl` → `curl-con-barra`, `tricep-extension` → `extension-de-triceps-con-mancuerna`
+- `farmers-walk` e `incline-bench-press` no tienen equivalente en el catálogo → se
+  definen como **LEGACY_EXERCISES** dentro de `rutinaService.js`
+- API: `getRutina()`, `updateSlot(dayIndex, slotIndex, cambios)`, `resetDia(dayIndex)`,
+  `getDiaParaSesion(dayIndex)`, `resolverEjercicio(id)`
+- Cada slot tiene: `exerciseId`, `sets`, `repsMin`, `repsMax`, `esPausa`
+- Ejercicios pausa (`esPausa: true`): Plancha y Caminata del Granjero — guardan
+  segundos en el campo `reps`
+
+### Sección "Mi Rutina" en Configuración
+- 3 cards (Día 1, 2, 3) con GIF thumbnail + nombre + sets×reps de cada slot
+- Vista de edición por día: cambiar ejercicio del slot (modal con catálogo filtrado),
+  editar sets/reps, restaurar defaults con confirmación
+- Al cambiar un ejercicio: el historial del ejercicio anterior NO se pierde,
+  el nuevo ejercicio empieza historial limpio desde cero
+- Componente: `src/components/MiRutina.jsx`
+
 ### Entrenamiento de gym
-- Rutina precargada de 3 días full-body con superseries antagónicas (12 ejercicios)
-- GIF demostrativo + descripción técnica + error común por ejercicio
-- Autocomplete de peso/reps desde la última sesión del mismo ejercicio
+- Lee la rutina del usuario via `getDiaParaSesion(dayIndex)` — no de `workoutPlan.js`
+- GIF + cues + commonError desde el catálogo para todos los ejercicios
+- Autocomplete de peso/reps desde la última sesión del mismo `exerciseId`
 - Sobrecarga progresiva: referencia visible de la sesión anterior
-- Cronómetro de descanso entre series (45s) con beep y vibración
-- Cronómetro ascendente de duración de sesión (MM:SS)
-- Resumen de sesión: series, volumen total (kg×reps) y duración
-- Alerta de estancamiento: 3 sesiones consecutivas sin progreso en un ejercicio
+- Cronómetro de descanso (45s) con beep y vibración
+- Cronómetro ascendente de sesión (referencia absoluta con `Date.now()`)
+- Alerta de estancamiento: 3 sesiones consecutivas sin progreso
 
 ### Entrenamiento en casa
-- Catálogo de 8 ejercicios en 2 categorías (peso corporal + mancuernas)
-- GIFs donde existen, placeholders elegantes donde no
-- Sesión libre: el usuario elige y ordena los ejercicios
-- Puede agregar el mismo ejercicio varias veces (instancias independientes)
+- Catálogo dinámico: `filtrarEjercicios({ lugar: 'casa' })` — no hardcodeado
+- Filtros en el picker: músculo + equipo
+- Sesión libre: el usuario elige ejercicios; puede agregar el mismo más de una vez
 - Dos modos: "Reemplaza gym" (cuenta para el score) o "Complemento extra" (no cuenta)
-- Sobrecarga progresiva: referencia de la última vez que hizo ese ejercicio
+- Sobrecarga progresiva por `exerciseId`
+
+### Editar y borrar sesiones
+- **Editar**: `updateSession(id, exercises)` en `workoutService.js` → edición in-place,
+  recalcula `volumeKg`, agrega `editadaEl` con timestamp
+- **Borrar**: `deleteSession(id)` en `workoutService.js`
+- Acceso desde **Historial → tab Sesiones**: botones ✏️ Editar y 🗑️ Borrar en cada fila
+- Acceso desde **Home → "Tu progreso reciente"**: ícono ⋯ por sesión → menú contextual
+- Modal de edición (`ModalEditarSesion`): lista de ejercicios expandibles con
+  series editables; aviso "cambios sin guardar" al cancelar con cambios pendientes
+- Modal de borrado (`ModalConfirmarBorrado`): muestra detalle de la sesión, siempre
+  requiere confirmación explícita
+- Toast de feedback temporal (`Toast.jsx`) tras guardar o borrar
+- Impacto automático en métricas: los hooks leen de IndexedDB en cada render, no
+  hay caché en memoria, los cambios se reflejan al recargar los datos
+
+### Detalle de sesión
+- Modal `ModalDetalleSesion`: header con fecha/tipo, stats (duración, series, volumen),
+  lista de ejercicios con todas las series desglosadas (kg × reps o seg para pausas)
+- Acceso: tocar el área principal de cualquier card de sesión en Home
+- Incluye botón "✏️ Editar sesión" que abre directamente `ModalEditarSesion`
+
+### Selector de ejercicios en Historial
+- `ExerciseSelector` solo muestra los ejercicios que tienen al menos una sesión
+  registrada — no la lista completa del catálogo
+- Agrupa los ejercicios por músculo con `<optgroup>`
+- Resuelve nombres desde el catálogo por `exerciseId`; fallback al ID para ejercicios
+  legacy no encontrados en el catálogo
+
+### Cards de sesión en Home
+- Cada sesión en "Tu progreso reciente" muestra:
+  - Título: "Día X · fecha" o "🏠 Casa · fecha"
+  - Músculos principales trabajados (máx 3, derivados del catálogo)
+  - Métricas: duración · series · volumen
+- Tocar el área principal → abre `ModalDetalleSesion`
+- Ícono `⋯` → menú contextual con "✏️ Editar sesión" y "🗑️ Borrar sesión"
 
 ### Peso corporal
 - Registro quincenal con historial cronológico inmutable
 - Curva de proyección hardgainer (mes 1: +2kg, mes 2: +1kg, mes 3: +1kg, +0.5kg/mes)
 - Gráfico dual: peso real vs proyección ideal
 - Indicador de estado: verde/amarillo/rojo según días desde el último registro
-- Modal proactivo si pasaron >15 días sin registrar
-- Alerta quincenal de rotación de variantes (cada 120 días)
 
-### Analytics
+### Analytics y consistencia
 - Score de consistencia semanal (0–100): 33pts por entreno + 1pt peso al día
-- Sesiones en casa "reemplazo" cuentan igual que gym; "complemento" no cuentan
-- Tendencia de 4 semanas con barras visuales
+- `home_extra` no cuenta; `home_replacement` cuenta igual que gym
 - Racha de semanas consecutivas con 3 entrenos (solo semanas completas)
-- Evolución de peso máximo, reps y volumen por ejercicio (gráficos con toggle)
-- Detección de mejor progreso entre sesiones del mismo día
-
-### Notificaciones
-- Recordatorios de entrenamiento: días y hora configurables, disparo via `visibilitychange`
-- Alerta quincenal de peso (nativa o banner in-app)
-- Alerta de backup cada 30 días
-- Fallback in-app cuando el permiso está denegado (banner colapsable)
+- `ROTATION_VARIANTS` en `analyticsService.js` usa IDs del catálogo nuevo
 
 ### Datos y backup
-- Export: ZIP con 3 CSVs (peso, entrenamientos con tipo_sesion, consistencia semanal)
+- Export: ZIP con 3 CSVs (peso, entrenamientos, consistencia semanal)
+  — entrenamientos incluye columnas `ejercicio_id` y `ejercicio_nombre`
 - Import: restauración completa desde ZIP con preview y confirmación
-- Banner de recordatorio si pasaron >30 días sin backup
-- Aviso de almacenamiento local en el onboarding
-
-### PWA
-- Instalable en iOS (Safari) y Android (Chrome)
-- Service Worker con Workbox: CacheFirst para GIFs y assets, NetworkFirst para resto
-- Funciona offline después de la primera carga (requiere HTTPS — usar Vercel)
 
 ---
 
 ## Arquitectura y decisiones de diseño
 
 ### Persistencia: IndexedDB vía `idb`
-Se eligió IndexedDB sobre localStorage porque:
-- Soporta objetos nativos sin serialización
-- Capacidad de GBs vs ~5MB de localStorage
-- Asíncrono — no bloquea la UI
-- Índices para queries eficientes (ej: `by_date` en `weightLogs`)
-
 **5 stores en `db.js` (versión 1):**
 - `profile` — un solo registro, keyPath `id = 'me'`
 - `weightLogs` — historial inmutable, índice `by_date`
-- `workoutSessions` — gym + casa, índice `by_date`
+- `workoutSessions` — gym + casa, índice `by_date`, keyPath `id` autoincremental
 - `nutritionLogs` — vacío, reservado para futuro
 - `sleepLogs` — vacío, reservado para futuro
 
-**localStorage** se usa solo para preferencias ligeras que no son datos del usuario:
+**localStorage** se usa para:
 - Configuración de notificaciones
 - Fechas de snooze de banners
 - Fecha del último backup
+- **Rutina personalizada del usuario** (`fittracker_rutina`)
 
 ### Capas de código
 ```
@@ -222,81 +288,123 @@ Models (factories de objetos)
 IndexedDB / localStorage
 ```
 
-Los componentes nunca llaman a servicios directamente — siempre via hooks. Los servicios son funciones async puras sin estado de React.
+Los componentes nunca llaman a servicios directamente — siempre via hooks. Los servicios son funciones async puras sin estado de React. **Excepción aceptada**: los modales de edición/borrado y `MiRutina` llaman a servicios directamente porque son componentes de acción puntual, no de datos persistentes.
 
-### Patrón de hooks compartidos
-Hooks como `useWeightLogs`, `useProfile` y `useWeightStatus` son llamados en múltiples componentes independientemente. Cada instancia hace su propia consulta a IndexedDB. Esto es aceptable dado el volumen de datos (cientos de registros, no millones). Si se necesita optimizar: usar React Context o una librería de estado global.
+### Modelo de sesión
+`workoutSession` tiene:
+- `sessionType`: `'gym'` | `'home_replacement'` | `'home_extra'`
+- `exercises`: `[{ exerciseId, sets: [{ weightKg, reps }] }]`
+- `volumeKg`: calculado al guardar y recalculado al editar
+- `editadaEl`: timestamp de la última edición (solo si fue editada)
 
-### Modelo de sesión unificado gym + casa
-`workoutSession` tiene un campo `sessionType`:
-- `'gym'` (default) — sesión de gym normal
-- `'home_replacement'` — sesión en casa que reemplaza gym, tiene `dayIndex`
-- `'home_extra'` — sesión en casa complementaria, `dayIndex = null`
-
-La consistencyService excluye `home_extra` del conteo. Todas las demás sesiones (gym + home_replacement) cuentan hacia el máximo de 3 por semana.
+Las sesiones antiguas sin `sessionType` usan `s.sessionType ?? 'gym'` como fallback.
 
 ### Identificadores de ejercicios
-- Ejercicios de gym: IDs cortos como `'squat'`, `'bench-press'`
-- Ejercicios en casa: prefijo `'home_'` → `'home_pushup'`, `'home_dumbbell_curl'`
-- El historial unificado (`useExerciseHistory`) busca por `exerciseId` en todas las sesiones. Funciona automáticamente para gym y casa.
+- Los IDs actuales son slugs descriptivos: `'sentadilla-con-barra'`, `'jalon-al-pecho'`
+- Los IDs viejos (`'squat'`, `'bench-press'`) aún pueden existir en sesiones guardadas
+- `resolverEjercicio(id)` traduce viejos → nuevos y devuelve el objeto del catálogo.
+  Siempre usarlo para mostrar datos de un ejercicio del historial, nunca buscar
+  directo en el catálogo
+- `useExerciseHistory(exerciseId)` busca por `exerciseId` en todas las sesiones —
+  funciona con IDs viejos y nuevos
+
+### Flujo completo de una sesión de gym
+1. `useWorkoutSession.startDay(dayIndex)` → llama `getDiaParaSesion(dayIndex)`
+   que lee la rutina del usuario desde `rutinaService`
+2. Carga el historial previo de cada ejercicio con `buildLastDataMap`
+3. El usuario registra series → `logSet()` acumula en `loggedData`
+4. Al completar → `saveWorkoutSession()` persiste en IndexedDB con `volumeKg` calculado
+
+### Patrón de recarga de datos
+`useHomeData` expone `reload()` que incrementa un `refreshKey` y fuerza un nuevo
+`useEffect`. Llamarlo después de editar o borrar una sesión desde el Home para
+actualizar `recentSessions` sin recargar la página.
+
+En Historial, la recarga es manual: `getAllSessions().then(s => setAllSessions([...s].reverse()))`.
 
 ### Notificaciones sin backend
-Las Web Notifications solo funcionan cuando el navegador está abierto. Sin un servidor Push, no es posible despertar al navegador. La estrategia implementada:
 1. Al abrir la app o volver a la pestaña (`visibilitychange`), se chequea si corresponde un recordatorio
 2. Si el permiso está dado → notificación nativa
 3. Si el permiso está denegado → banner in-app colapsable
 
-Los banners de recordatorio (entrenamiento, peso, backup) usan fechas en localStorage para no repetirse el mismo día.
-
 ### PWA y Service Worker
-El Service Worker solo funciona en HTTPS o localhost. Desde la red local (`http://192.168.x.x`) el SW no se registra y el offline no funciona. La solución es deployar en Vercel (HTTPS automático).
-
+El Service Worker solo funciona en HTTPS o localhost.
 Estrategia Workbox:
 - `CacheFirst` para GIFs (`/exercises/*.gif`) y assets Vite (con hash en el nombre)
 - `NetworkFirst` para el resto, con timeout de 5 segundos
 
-### Cronómetro de sesión
-El timer ascendente usa `Date.now()` como referencia absoluta (no un contador de segundos). Se calcula: `Math.floor((Date.now() - new Date(startedAt).getTime()) / 1000)` en cada tick. Esto evita deriva acumulada y funciona correctamente si la pantalla se bloquea o la app va a segundo plano.
+### Fix importante: overflow en modales a pantalla completa
+Los modales que ocupan `fixed inset-0 flex flex-col` necesitan `min-h-0` en el
+área scrolleable para que el scroll funcione correctamente en iOS Safari:
+```jsx
+<div className="flex-1 min-h-0 overflow-y-auto ...">
+```
+Sin `min-h-0`, los flex items tienen `min-height: auto` por defecto, lo que impide
+que el contenedor establezca correctamente su contexto de scroll.
 
-La duración final se calcula igual al guardar: `Date.now() - new Date(startedAt)`. No hay estado de "tiempo corriendo" — solo el timestamp de inicio.
+También: nunca usar `overflow-hidden` en un card que está dentro de un flex
+container scrolleable — puede recortar el contenido en lugar de dejarlo crecer.
 
 ---
 
 ## Qué intentamos y no funcionó
 
-### `npm create vite@latest .` en directorio con `.git`
-El comando cancela interactivamente si detecta archivos en el directorio. Se resolvió creando los archivos del proyecto manualmente en lugar de usar el scaffolding automático.
+### `overflow-hidden` en cards dentro de modales scrolleables
+Usamos `overflow-hidden` en los cards de ejercicio dentro de `ModalDetalleSesion`
+para redondear esquinas. El resultado fue que solo se mostraba la primera serie de
+cada ejercicio — el `overflow: hidden` recortaba el contenido en la interacción
+con el flex container padre. Fix: usar `rounded-t-xl` / `rounded-b-xl` explícitos
+en cada sección del card sin `overflow-hidden`.
+
+### `flex-1` en inputs dentro de flex rows
+El input de reps en `ModalEditarSesion` tenía `flex-1` además de `w-14`.
+`flex-1` prevalece y lo estira a todo el ancho disponible, rompiendo el layout
+cuando hay múltiples ejercicios expandidos. Fix: usar `shrink-0` en su lugar.
 
 ### Service Worker en red local (HTTP)
-Intentamos servir la PWA desde la IP de la red local para que el usuario la instalara en el iPhone. Funcionó visualmente (la app cargaba) pero el Service Worker nunca se registró porque iOS Safari requiere HTTPS. Resultado: la app abría en casa pero quedaba en blanco afuera. Solución: Vercel.
+Intentamos servir la PWA desde la IP de la red local. El SW nunca se registró
+porque iOS Safari requiere HTTPS. Solución: Vercel.
 
 ### Autocompletado por día (`getLastSessionByDay`)
-La primera implementación del autocompletado de peso/reps buscaba la última sesión del mismo `dayIndex`. Problema: si el usuario hacía el Día 1 hace 3 semanas y el Día 2 ayer, al iniciar Día 1 veía datos de hace 3 semanas. Se reemplazó con `buildLastDataMap` que busca la última sesión que contenga cada `exerciseId` específico, independientemente del día.
-
-### Múltiples instancias de `useWeightLogs` / `useProfile`
-Varios componentes llaman a los mismos hooks. Al principio generaba preocupación de performance por múltiples lecturas de IndexedDB. En la práctica, con el volumen de datos actual, no hay problema perceptible. Si en el futuro se vuelve un cuello de botella, la solución es un Context Provider que centralice las lecturas.
+La primera implementación buscaba la última sesión del mismo `dayIndex`. Si el
+usuario había hecho el Día 1 hace 3 semanas y el Día 2 ayer, al iniciar Día 1
+veía datos de hace 3 semanas. Fix: `buildLastDataMap` busca por `exerciseId`
+específico en todas las sesiones, independientemente del día.
 
 ---
 
 ## Contexto importante para sesiones futuras
 
-### El selector de ejercicio en casa no incluye todos los ejercicios de gym
-`ExerciseSelector` (Historial → tab Ejercicios) usa `ALL_EXERCISES` de `workoutPlan.js`. Los ejercicios de casa están en `ALL_HOME_EXERCISES` de `homeExercises.js`. Si se quiere ver la evolución de ejercicios en casa desde Historial, hay que actualizar `ExerciseSelector` para incluir ambos.
+### `workoutPlan.js` y `homeExercises.js` están deprecados pero no eliminados
+Estos archivos todavía existen y tienen los datos hardcodeados originales. No
+eliminarlos aún — podrían tener referencias legacy. La fuente de verdad ahora es
+`ejercicios.json` + `rutinaService.js`. Si en algún momento se quiere limpiar,
+verificar primero que ningún componente los importe todavía.
 
 ### El perfil no tiene campo `name`
-El onboarding pide edad, peso y altura. No hay nombre. El Home saluda con "Hola 👋" genérico. Agregar el nombre requiere: campo en el formulario del onboarding, campo en el modelo `profile.js`, y leer `profile.name` en `Home.jsx`.
+El onboarding pide edad, peso y altura. No hay nombre de usuario. El Home saluda
+con "Hola 👋" genérico. Para agregar el nombre: campo en el formulario del
+onboarding, campo en el modelo `profile.js`, leer `profile.name` en `Home.jsx`.
 
 ### El score de consistencia está preparado para nutrición y sueño
-En `consistencyService.js` hay un comentario TODO que indica dónde integrar los futuros módulos. Actualmente el score máximo es 100 (99 por entrenos + 1 por peso). La propuesta futura es dividir en 3 módulos: gym, nutrición, sueño → cada uno aporta hasta ~33 pts.
+En `consistencyService.js` hay un TODO indicando dónde integrar los futuros
+módulos. Actualmente el score máximo es 100. La propuesta futura divide en 3
+módulos (gym, nutrición, sueño) de ~33 pts cada uno.
 
-### Las sesiones antiguas no tienen `sessionType`
-Las sesiones guardadas antes de agregar el campo `sessionType` no lo tienen. El código siempre usa `s.sessionType ?? 'gym'` para el fallback. No hay migración necesaria.
+### ExerciseSelector solo muestra ejercicios con historial
+Si el usuario recién instala la app y no tiene sesiones registradas, el selector
+de ejercicios en Historial → tab Ejercicios aparece vacío. Es el comportamiento
+correcto — se va poblando a medida que registra sesiones.
 
-### Volumen en ejercicios de peso corporal
-Las flexiones y sentadillas se guardan con `weightKg: 0`. El volumen calculado (0 × reps = 0) es correcto pero no muy útil. En el futuro se podría usar el peso corporal del perfil para estimar el volumen real de estos ejercicios.
+### Ejercicios en Historial → tab Ejercicios
+`ExerciseSelector` resuelve los ejercicios del historial via `resolverEjercicio()`.
+Ejercicios de casa también aparecen si el usuario los registró. No hay distinción
+entre gym y casa en el selector.
 
-### Los GIFs de gym reutilizados en ejercicios en casa
-`bicep-curl.gif`, `overhead-press.gif` y `barbell-row.gif` se muestran tanto en la sesión de gym como en la sesión en casa (Arnold Press y Remo con Mancuerna). Son aproximaciones visuales aceptables para el MVP.
+### Rotación de variantes
+`ROTATION_VARIANTS` en `analyticsService.js` mapea el exerciseId actual al ID
+del ejercicio sugerido como variante. Solo define la sugerencia como texto; la
+implementación de "elegir la variante directamente" queda para el futuro.
 
 ---
 
@@ -304,13 +412,12 @@ Las flexiones y sentadillas se guardan con `weightKg: 0`. El volumen calculado (
 
 | Feature | Descripción |
 |---|---|
-| **Nutrición** | Tracking diario: 115g proteína, superávit +300 kcal. El módulo sumará al score de consistencia. |
-| **Sueño** | Tracking diario: 7.5–8hs, 1hs sin pantallas. Correlación con rendimiento en gym. |
-| **Capacitor** | Compilar como app nativa iOS/Android para distribución sin Safari. |
-| **Backend Supabase** | Sync entre dispositivos con Supabase Auth + PostgreSQL. Mantiene el modelo offline-first con sync en background. |
+| **Nutrición** | Tracking diario: 115g proteína, superávit +300 kcal. Suma al score de consistencia. |
+| **Sueño** | Tracking diario: 7.5–8hs, 1hs sin pantallas. Correlación con rendimiento. |
 | **Nombre de usuario** | Campo `name` en el perfil para personalizar el saludo del Home. |
-| **Variantes de ejercicios** | Permitir elegir la variante sugerida en la alerta de rotación. |
-| **ExerciseSelector unificado** | Incluir ejercicios en casa en el selector del Historial. |
+| **Variantes de ejercicios** | Elegir directamente la variante sugerida en la alerta de rotación. |
+| **Capacitor** | Compilar como app nativa iOS/Android para distribución sin Safari. |
+| **Backend Supabase** | Sync entre dispositivos. Offline-first con sync en background. |
 
 ---
 
