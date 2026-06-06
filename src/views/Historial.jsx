@@ -5,9 +5,9 @@ import { useStagnationAlerts } from '../hooks/useStagnationAlerts'
 import { useWeightStatus }     from '../hooks/useWeightStatus'
 import { formatDateLong }      from '../utils/date'
 import { formatDuration, formatVolume } from '../utils/format'
-import { resolverEjercicio }   from '../services/rutinaService'
-import { getRutina }           from '../services/rutinaService'
+import { resolverEjercicio, getRutina } from '../services/rutinaService'
 import { getAllSessions, updateSession, deleteSession } from '../services/workoutService'
+import { useAuth } from '../contexts/AuthContext'
 import BodyWeightChart         from '../components/BodyWeightChart'
 import ExerciseSelector        from '../components/ExerciseSelector'
 import ExerciseHistoryChart    from '../components/ExerciseHistoryChart'
@@ -23,20 +23,28 @@ import Toast                   from '../components/Toast'
 const TABS = ['Peso corporal', 'Ejercicios', 'Sesiones']
 
 export default function Historial() {
+  const { user }                          = useAuth()
   const [activeTab, setActiveTab]         = useState(0)
   const [allSessions, setAllSessions]     = useState([])
   const [selectedExercise, setSelectedEx] = useState(null)
   const [showModal, setShowModal]         = useState(false)
+  const [rutina, setRutina]               = useState(null)
 
   // ── Estado editar / borrar ──
   const [editingSession,   setEditingSession]   = useState(null)
   const [deletingSession,  setDeletingSession]  = useState(null)
   const [toast,            setToast]            = useState('')
 
-  const reloadSessions = () =>
-    getAllSessions().then(s => setAllSessions([...s].reverse()))
+  const reloadSessions = () => {
+    if (!user) return
+    getAllSessions(user.id).then(s => setAllSessions([...s].reverse()))
+  }
 
-  useEffect(() => { reloadSessions() }, [])
+  useEffect(() => {
+    if (!user) return
+    reloadSessions()
+    getRutina(user.id).then(setRutina)
+  }, [user])
 
   const { logs, lastLog, status, label, color, addLog } = useWeightStatus()
   const { chartData, profile }                          = useBodyWeightChart()
@@ -53,14 +61,14 @@ export default function Historial() {
     .filter(Boolean)
 
   async function handleSaveEdit(updatedExercises) {
-    await updateSession(editingSession.id, updatedExercises)
+    await updateSession(user.id, editingSession.id, updatedExercises)
     setEditingSession(null)
     setToast('Sesión actualizada ✓')
     reloadSessions()
   }
 
   async function handleConfirmDelete() {
-    await deleteSession(deletingSession.id)
+    await deleteSession(user.id, deletingSession.id)
     setDeletingSession(null)
     setToast('Sesión eliminada')
     reloadSessions()
@@ -193,6 +201,7 @@ export default function Historial() {
             <SessionRow
               key={session.id ?? i}
               session={session}
+              rutina={rutina}
               onEdit={() => setEditingSession(session)}
               onDelete={() => setDeletingSession(session)}
             />
@@ -231,10 +240,9 @@ export default function Historial() {
   )
 }
 
-function SessionRow({ session, onEdit, onDelete }) {
-  const rutina = getRutina()
-  const type   = session.sessionType ?? 'gym'
-  const day    = session.dayIndex != null ? rutina[session.dayIndex] : null
+function SessionRow({ session, rutina, onEdit, onDelete }) {
+  const type = session.sessionType ?? 'gym'
+  const day  = session.dayIndex != null ? rutina?.[session.dayIndex] : null
   const sets   = (session.exercises ?? []).reduce((acc, ex) => acc + ex.sets.length, 0)
 
   const label = type === 'home_replacement'

@@ -2,9 +2,10 @@ import { useState, useCallback, useEffect } from 'react'
 import { getDiaParaSesion } from '../services/rutinaService'
 import { saveWorkoutSession, getAllSessions } from '../services/workoutService'
 import { useRestTimer } from './useRestTimer'
+import { useAuth } from '../contexts/AuthContext'
 
-async function buildLastDataMap(exercises) {
-  const allSessions = await getAllSessions()
+async function buildLastDataMap(userId, exercises) {
+  const allSessions = await getAllSessions(userId)
   const map = {}
   exercises.forEach(ex => {
     const last = [...allSessions]
@@ -16,6 +17,7 @@ async function buildLastDataMap(exercises) {
 }
 
 export function useWorkoutSession() {
+  const { user }                              = useAuth()
   const [phase, setPhase]                     = useState('idle')
   const [dayIndex, setDayIndex]               = useState(null)
   const [exercises, setExercises]             = useState([])
@@ -31,8 +33,8 @@ export function useWorkoutSession() {
   const totalSets       = currentExercise?.sets ?? 0
 
   const startDay = useCallback(async (idx) => {
-    const flat     = getDiaParaSesion(idx)
-    const lastData = await buildLastDataMap(flat)
+    const flat     = await getDiaParaSesion(user.id, idx)
+    const lastData = await buildLastDataMap(user.id, flat)
 
     setDayIndex(idx)
     setExercises(flat)
@@ -42,7 +44,7 @@ export function useWorkoutSession() {
     setLastDataByEx(lastData)
     setStartedAt(new Date().toISOString())
     setPhase('exercising')
-  }, [])
+  }, [user])
 
   const logSet = useCallback((weightKg, reps) => {
     const exId = currentExercise.id
@@ -68,7 +70,6 @@ export function useWorkoutSession() {
     })
   }, [currentExercise, setIndex, totalSets, exIndex, exercises.length, timer])
 
-  // Guardar sesión al completar — calcula duración desde startedAt
   useEffect(() => {
     if (phase !== 'done') return
     const durationSeconds = startedAt
@@ -77,7 +78,7 @@ export function useWorkoutSession() {
     const exercisesPayload = Object.entries(loggedData).map(([exerciseId, sets]) => ({
       exerciseId, sets,
     }))
-    saveWorkoutSession({ dayIndex, startedAt, exercises: exercisesPayload, durationSeconds })
+    saveWorkoutSession(user.id, { dayIndex, startedAt, exercises: exercisesPayload, durationSeconds })
   }, [phase]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const reset = useCallback(() => {
@@ -95,17 +96,8 @@ export function useWorkoutSession() {
   const prevExerciseData = lastDataByExercise[currentExercise?.id] ?? null
 
   return {
-    phase,
-    dayIndex,
-    currentExercise,
-    setIndex,
-    totalSets,
-    timer,
-    loggedData,
-    prevExerciseData,
-    startedAt,       // expuesto para el cronómetro de la UI
-    startDay,
-    logSet,
-    reset,
+    phase, dayIndex, currentExercise, setIndex, totalSets,
+    timer, loggedData, prevExerciseData, startedAt,
+    startDay, logSet, reset,
   }
 }

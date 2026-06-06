@@ -1,8 +1,8 @@
+import { useState, useEffect }   from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider, useAuth }  from './contexts/AuthContext'
 import { useProfile }             from './hooks/useProfile'
 import { addWeightLog }           from './services/weightService'
-import { createWeightLog }        from './models/weightLog'
 import AppShell              from './layout/AppShell'
 import Onboarding            from './views/Onboarding'
 import Home                  from './views/Home'
@@ -14,16 +14,29 @@ import EnRadar               from './views/EnRadar'
 import Configuracion         from './views/Configuracion'
 import ProactiveWeightModal  from './components/ProactiveWeightModal'
 import Auth                  from './views/Auth'
+import MigrationModal        from './components/MigrationModal'
+import { hasLegacyData }     from './services/migrationService'
 
 function AppRoutes() {
-  const { user }                           = useAuth()
-  const { profile, loading, saveProfile }  = useProfile()
+  const { user }                          = useAuth()
+  const { profile, loading, saveProfile } = useProfile()
+  const [showMigration, setShowMigration] = useState(false)
+  const [migrationChecked, setMigrationChecked] = useState(false)
+
+  // Chequear datos legacy una sola vez al estar autenticado
+  useEffect(() => {
+    if (!user) return
+    hasLegacyData().then(has => {
+      setShowMigration(has)
+      setMigrationChecked(true)
+    })
+  }, [user])
 
   // Usuario no autenticado → solo pantalla de login/registro
   if (!user) return <Auth />
 
-  // Autenticado pero IndexedDB todavía cargando → spinner
-  if (loading) {
+  // Esperando chequeo de migración o carga de perfil
+  if (!migrationChecked || loading) {
     return (
       <div className="flex items-center justify-center h-dvh bg-slate-950">
         <span className="text-slate-600 text-sm">Cargando…</span>
@@ -31,11 +44,16 @@ function AppRoutes() {
     )
   }
 
+  // Hay datos legacy → mostrar modal de migración
+  if (showMigration) {
+    return <MigrationModal onDone={() => setShowMigration(false)} />
+  }
+
   // Autenticado pero sin perfil → onboarding
   if (!profile) {
     async function handleOnboardingComplete(formData) {
       await saveProfile(formData)
-      await addWeightLog(createWeightLog({ weightKg: formData.weightKg }))
+      await addWeightLog(user.id, { weightKg: formData.weightKg })
     }
     return (
       <div className="max-w-lg mx-auto h-dvh bg-slate-950 overflow-y-auto px-4">

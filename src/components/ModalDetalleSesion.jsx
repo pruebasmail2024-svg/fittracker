@@ -1,16 +1,16 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { formatDateLong }    from '../utils/date'
 import { formatDuration, formatVolume } from '../utils/format'
 import { resolverEjercicio, getRutina } from '../services/rutinaService'
 import ModalEditarSesion from './ModalEditarSesion'
 import { updateSession } from '../services/workoutService'
+import { useAuth } from '../contexts/AuthContext'
 
 const PAUSA_IDS = new Set(['plancha', 'farmers-walk'])
 
-function sessionLabel(session) {
-  const rutina = getRutina()
-  const type   = session.sessionType ?? 'gym'
-  const day    = session.dayIndex != null ? rutina[session.dayIndex] : null
+function sessionLabel(session, rutina) {
+  const type = session.sessionType ?? 'gym'
+  const day  = session.dayIndex != null ? rutina?.[session.dayIndex] : null
   if (type === 'home_extra')        return '🏠 Casa — complemento'
   if (type === 'home_replacement')  return `🏠 Casa — reemplazó ${day?.label ?? ''}`
   return `🏋️ ${day?.label ?? 'Gym'}`
@@ -64,18 +64,25 @@ function ExerciseDetail({ ex }) {
 }
 
 export default function ModalDetalleSesion({ session, onClose, onEdited }) {
+  const { user }                = useAuth()
   const [editando, setEditando] = useState(false)
+  const [rutina, setRutina]     = useState(null)
+
+  useEffect(() => {
+    if (!user) return
+    getRutina(user.id).then(setRutina)
+  }, [user])
 
   if (!session) return null
 
   const fecha  = formatDateLong(session.startedAt || session.completedAt)
-  const label  = sessionLabel(session)
+  const label  = sessionLabel(session, rutina)
   const sets   = (session.exercises ?? []).reduce((acc, ex) => acc + ex.sets.length, 0)
 
   async function handleSaveEdit(updatedExercises) {
-    await updateSession(session.id, updatedExercises)
+    await updateSession(user.id, session.id, updatedExercises)
     setEditando(false)
-    onEdited?.()   // avisa al padre para que recargue y muestre toast
+    onEdited?.()
   }
 
   if (editando) {

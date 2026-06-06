@@ -1,13 +1,29 @@
-import { dbPromise } from './db'
-import { createWeightLog } from '../models/weightLog'
+import { supabase } from '../lib/supabase'
 
-export async function addWeightLog({ weightKg, recordedAt }) {
-  const db = await dbPromise
-  return db.add('weightLogs', createWeightLog({ weightKg, recordedAt }))
+export async function getAllWeightLogs(userId) {
+  const { data, error } = await supabase
+    .from('weight_logs')
+    .select('*')
+    .eq('user_id', userId)
+    .order('fecha', { ascending: true })
+
+  if (error) throw error
+
+  return data.map(row => ({
+    id:         row.id,
+    weightKg:   row.peso_kg,
+    recordedAt: row.fecha,
+  }))
 }
 
-export async function getAllWeightLogs() {
-  const db = await dbPromise
-  // Devuelve todos los registros ordenados por fecha ascendente
-  return db.getAllFromIndex('weightLogs', 'by_date')
+export async function addWeightLog(userId, { weightKg, recordedAt }) {
+  const { error } = await supabase
+    .from('weight_logs')
+    .insert({
+      user_id: userId,
+      peso_kg: Number(weightKg),
+      fecha:   recordedAt ?? new Date().toISOString(),
+    })
+
+  if (error) throw error
 }

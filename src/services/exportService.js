@@ -4,6 +4,7 @@ import { getAllSessions }    from './workoutService'
 import { getWeeklyScores }  from './consistencyService'
 import { markBackupDownloaded } from './notificationService'
 import { resolverEjercicio } from './rutinaService'
+import { supabase } from '../lib/supabase'
 
 // ─── Helpers CSV ──────────────────────────────────────────────────────────────
 
@@ -21,8 +22,8 @@ function isoToDate(iso) {
 
 function weekCount(sessions) {
   if (sessions.length === 0) return 4
-  const earliest  = new Date(sessions[0].startedAt)
-  const weeksAgo  = Math.ceil((Date.now() - earliest) / (7 * 24 * 60 * 60 * 1000))
+  const earliest = new Date(sessions[0].startedAt)
+  const weeksAgo = Math.ceil((Date.now() - earliest) / (7 * 24 * 60 * 60 * 1000))
   return Math.max(weeksAgo + 1, 4)
 }
 
@@ -37,8 +38,8 @@ function buildPesoCSV(weightLogs) {
 function buildEntrenamientosCSV(sessions) {
   const rows = []
   sessions.forEach(session => {
-    const fecha      = isoToDate(session.startedAt)
-    const tipo       = session.sessionType ?? 'gym'
+    const fecha = isoToDate(session.startedAt)
+    const tipo  = session.sessionType ?? 'gym'
     session.exercises.forEach(ex => {
       ex.sets.forEach((set, i) => {
         const ejercicioMeta = resolverEjercicio(ex.exerciseId)
@@ -70,11 +71,11 @@ function buildConsistenciaCSV(sessions, weightLogs) {
       const end = new Date(week.weekStart)
       end.setDate(end.getDate() + 6)
       return {
-        semana_inicio:            week.weekStart.split('T')[0],
-        semana_fin:               end.toISOString().split('T')[0],
-        score:                    week.score,
+        semana_inicio:              week.weekStart.split('T')[0],
+        semana_fin:                 end.toISOString().split('T')[0],
+        score:                      week.score,
         entrenamientos_completados: week.trainings,
-        peso_registrado_al_dia:   week.weightBonus,
+        peso_registrado_al_dia:     week.weightBonus,
       }
     })
   )
@@ -83,7 +84,13 @@ function buildConsistenciaCSV(sessions, weightLogs) {
 // ─── Descarga principal ───────────────────────────────────────────────────────
 
 export async function generateAndDownloadBackup() {
-  const [weightLogs, sessions] = await Promise.all([getAllWeightLogs(), getAllSessions()])
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('No hay usuario autenticado.')
+
+  const [weightLogs, sessions] = await Promise.all([
+    getAllWeightLogs(user.id),
+    getAllSessions(user.id),
+  ])
 
   const zipped = zipSync({
     'peso_corporal.csv':        strToU8(buildPesoCSV(weightLogs)),
@@ -106,9 +113,5 @@ export async function generateAndDownloadBackup() {
 
   markBackupDownloaded()
 
-  return {
-    zipName,
-    pesoCount:    weightLogs.length,
-    sessionCount: sessions.length,
-  }
+  return { zipName, pesoCount: weightLogs.length, sessionCount: sessions.length }
 }

@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { getRutina, updateSlot, resetDia, resolverEjercicio } from '../services/rutinaService'
 import { filtrarEjercicios } from '../hooks/useEjerciciosCatalogo'
+import { useAuth } from '../contexts/AuthContext'
 
 // ─── Modal selector de ejercicios ────────────────────────────────────────────
 
@@ -271,17 +272,27 @@ function EditarDia({ dayIndex, rutina, onCambio, onReset, onBack }) {
 // ─── Vista principal: 3 cards de días ────────────────────────────────────────
 
 export default function MiRutina() {
-  const [rutina, setRutina]       = useState(() => getRutina())
-  const [editandoDia, setEditando] = useState(null) // null | 0 | 1 | 2
+  const { user }                  = useAuth()
+  const [rutina, setRutina]       = useState(null)
+  const [editandoDia, setEditando] = useState(null)
 
-  function handleCambio(dayIndex, slotIndex, cambios) {
-    updateSlot(dayIndex, slotIndex, cambios)
-    setRutina(getRutina())
+  useEffect(() => {
+    if (!user) return
+    getRutina(user.id).then(setRutina)
+  }, [user])
+
+  async function handleCambio(dayIndex, slotIndex, cambios) {
+    const nueva = await updateSlot(user.id, dayIndex, slotIndex, cambios)
+    setRutina([...nueva])
   }
 
-  function handleReset(dayIndex) {
-    resetDia(dayIndex)
-    setRutina(getRutina())
+  async function handleReset(dayIndex) {
+    const nueva = await resetDia(user.id, dayIndex)
+    setRutina([...nueva])
+  }
+
+  if (!rutina) {
+    return <p className="text-sm text-slate-500 text-center py-4">Cargando rutina…</p>
   }
 
   if (editandoDia !== null) {

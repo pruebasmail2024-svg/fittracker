@@ -1,11 +1,12 @@
-import { useState }              from 'react'
-import { useNavigate }          from 'react-router-dom'
+import { useState, useEffect }   from 'react'
+import { useNavigate }           from 'react-router-dom'
 import { useHomeData }           from '../hooks/useHomeData'
 import { useConsistencyScore }   from '../hooks/useConsistencyScore'
 import { useWeightStatus }       from '../hooks/useWeightStatus'
 import { useStagnationAlerts }   from '../hooks/useStagnationAlerts'
 import { getRutina, resolverEjercicio } from '../services/rutinaService'
 import { updateSession, deleteSession } from '../services/workoutService'
+import { useAuth }               from '../contexts/AuthContext'
 import { formatDateLong, formatDateFull } from '../utils/date'
 import { formatDuration, formatVolume }  from '../utils/format'
 import WeightStatusBadge                 from '../components/WeightStatusBadge'
@@ -135,12 +136,11 @@ function NextSessionCard({ day, trainedToday, todaySession, onStart, onViewHisto
   )
 }
 
-function RecentSessionRow({ session, index, onDetail, onEdit, onDelete }) {
+function RecentSessionRow({ session, index, rutina, onDetail, onEdit, onDelete }) {
   const [menuOpen, setMenuOpen] = useState(false)
 
-  const rutina   = getRutina()
-  const type     = session.sessionType ?? 'gym'
-  const day      = session.dayIndex != null ? rutina[session.dayIndex] : null
+  const type = session.sessionType ?? 'gym'
+  const day  = session.dayIndex != null ? rutina?.[session.dayIndex] : null
   const date     = formatDateLong(session.startedAt || session.completedAt)
   const sets     = session.exercises.reduce((acc, ex) => acc + ex.sets.length, 0)
   const musculos = musculosDeSesion(session)
@@ -230,7 +230,8 @@ function RecentSessionRow({ session, index, onDetail, onEdit, onDelete }) {
 // ─── Vista principal ──────────────────────────────────────────────────────────
 
 export default function Home() {
-  const navigate = useNavigate()
+  const navigate     = useNavigate()
+  const { user }     = useAuth()
 
   const {
     loading, trainedToday, todaySession, nextDayIndex, isTrainingDay,
@@ -242,9 +243,15 @@ export default function Home() {
   const [editingSession,  setEditingSession]  = useState(null)
   const [deletingSession, setDeletingSession] = useState(null)
   const [toast,           setToast]           = useState('')
+  const [rutina,          setRutina]          = useState(null)
+
+  useEffect(() => {
+    if (!user) return
+    getRutina(user.id).then(setRutina)
+  }, [user])
 
   async function handleSaveEdit(updatedExercises) {
-    await updateSession(editingSession.id, updatedExercises)
+    await updateSession(user.id, editingSession.id, updatedExercises)
     setEditingSession(null)
     setToast('Sesión actualizada ✓')
     reload()
@@ -257,7 +264,7 @@ export default function Home() {
   }
 
   async function handleConfirmDelete() {
-    await deleteSession(deletingSession.id)
+    await deleteSession(user.id, deletingSession.id)
     setDeletingSession(null)
     setToast('Sesión eliminada')
     reload()
@@ -267,8 +274,7 @@ export default function Home() {
   const { status: wStatus, label: wLabel, color: wColor, daysSince } = useWeightStatus()
   const { alerts }                                       = useStagnationAlerts()
 
-  const rutina  = getRutina()
-  const nextDay = rutina[nextDayIndex]
+  const nextDay = rutina?.[nextDayIndex] ?? null
 
   const stalledExercises = Object.entries(alerts)
     .filter(([, v]) => v)
@@ -384,6 +390,7 @@ export default function Home() {
               key={session.id ?? i}
               session={session}
               index={i}
+              rutina={rutina}
               onDetail={() => setDetailSession(session)}
               onEdit={() => setEditingSession(session)}
               onDelete={() => setDeletingSession(session)}

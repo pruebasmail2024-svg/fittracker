@@ -4,6 +4,7 @@ import { getAllSessions }          from '../services/workoutService'
 import { getAllWeightLogs }        from '../services/weightService'
 import { getSettings, shouldShowBackupReminder } from '../services/notificationService'
 import { resolverEjercicio }       from '../services/rutinaService'
+import { useAuth }                 from '../contexts/AuthContext'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -15,11 +16,10 @@ function getWeekStart(date) {
   return d
 }
 
-/** Semanas consecutivas completas (hacia atrás) con ≥ 3 sesiones. */
 function calcStreak(sessions) {
   const curWeekStart = getWeekStart(new Date())
   let weekStart = new Date(curWeekStart)
-  weekStart.setDate(weekStart.getDate() - 7)   // empieza en la última semana completa
+  weekStart.setDate(weekStart.getDate() - 7)
 
   for (let streak = 0; streak < 52; streak++) {
     const weekEnd = new Date(weekStart)
@@ -37,10 +37,6 @@ function calcStreak(sessions) {
   return 52
 }
 
-/**
- * Ejercicio con mayor subida de peso en la última sesión vs la sesión
- * anterior del mismo día.  Devuelve null si no hay datos suficientes.
- */
 function findBestProgress(sessions) {
   if (sessions.length < 2) return null
   const last = sessions.at(-1)
@@ -69,22 +65,31 @@ function findBestProgress(sessions) {
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
 export function useHomeData() {
-  const [loading, setLoading]     = useState(true)
-  const [profile, setProfile]     = useState(null)
-  const [sessions, setSessions]   = useState([])
-  const [weightLogs, setWeightLogs] = useState([])
-  const [refreshKey, setRefreshKey] = useState(0)
+  const { user }                              = useAuth()
+  const [loading, setLoading]                 = useState(true)
+  const [error, setError]                     = useState(null)
+  const [profile, setProfile]                 = useState(null)
+  const [sessions, setSessions]               = useState([])
+  const [weightLogs, setWeightLogs]           = useState([])
+  const [refreshKey, setRefreshKey]           = useState(0)
 
   useEffect(() => {
+    if (!user) return
     setLoading(true)
-    Promise.all([getProfile(), getAllSessions(), getAllWeightLogs()])
+    setError(null)
+    Promise.all([getProfile(user.id), getAllSessions(user.id), getAllWeightLogs(user.id)])
       .then(([p, s, w]) => {
         setProfile(p)
         setSessions(s)
         setWeightLogs(w)
         setLoading(false)
       })
-  }, [refreshKey])
+      .catch(err => {
+        console.error(err)
+        setError(err)
+        setLoading(false)
+      })
+  }, [user, refreshKey])
 
   const reload = () => setRefreshKey(k => k + 1)
 
@@ -94,12 +99,8 @@ export function useHomeData() {
   ) ?? null
   const trainedToday = todaySession !== null
 
-  // Próximo día: siempre avanza desde la última sesión completada
-  const nextDayIndex = sessions.length === 0 ? 0 : (sessions.at(-1).dayIndex + 1) % 3
-
-  // ¿Hoy es día de entrenamiento según la configuración?
-  const isTrainingDay = getSettings().days.includes(new Date().getDay())
-
+  const nextDayIndex   = sessions.length === 0 ? 0 : (sessions.at(-1).dayIndex + 1) % 3
+  const isTrainingDay  = getSettings().days.includes(new Date().getDay())
   const recentSessions = [...sessions].slice(-3).reverse()
   const bestProgress   = findBestProgress(sessions)
   const streak         = calcStreak(sessions)
@@ -113,18 +114,11 @@ export function useHomeData() {
   const showBackupAlert = profile ? shouldShowBackupReminder(profile.createdAt) : false
 
   return {
-    loading,
+    loading, error,
     profile,
-    trainedToday,
-    todaySession,
-    nextDayIndex,
-    isTrainingDay,
-    recentSessions,
-    bestProgress,
-    streak,
-    weightCurrent,
-    weightInitial,
-    weightDelta,
+    trainedToday, todaySession, nextDayIndex, isTrainingDay,
+    recentSessions, bestProgress, streak,
+    weightCurrent, weightInitial, weightDelta,
     showBackupAlert,
     reload,
   }

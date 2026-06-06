@@ -2,7 +2,9 @@ import { NavLink }              from 'react-router-dom'
 import { useNotifications }     from '../hooks/useNotifications'
 import InAppReminderBanner      from '../components/InAppReminderBanner'
 import BackupReminderBanner     from '../components/BackupReminderBanner'
+import ErrorBanner              from '../components/ErrorBanner'
 import { generateAndDownloadBackup } from '../services/exportService'
+import { useHomeData }          from '../hooks/useHomeData'
 
 const NAV_ITEMS = [
   { to: '/',            label: 'Inicio',   icon: '🏠' },
@@ -18,6 +20,7 @@ export default function AppShell({ children }) {
     showBanner, bannerType, dismissBanner,
     showBackupBanner, dismissBackupBanner,
   } = useNotifications()
+  const { error, reload } = useHomeData()
 
   async function handleBackupDownload() {
     try {
@@ -38,6 +41,7 @@ export default function AppShell({ children }) {
       </header>
 
       {/* Banners bajo el header */}
+      {error && <ErrorBanner onRetry={reload} />}
       {showBanner && (
         <InAppReminderBanner type={bannerType} onDismiss={dismissBanner} />
       )}

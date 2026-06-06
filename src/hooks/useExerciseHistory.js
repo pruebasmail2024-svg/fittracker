@@ -1,22 +1,24 @@
 import { useState, useEffect } from 'react'
 import { getAllSessions } from '../services/workoutService'
 import { formatDateChart } from '../utils/date'
+import { useAuth } from '../contexts/AuthContext'
 
 export function useExerciseHistory(exerciseId) {
+  const { user }              = useAuth()
   const [data, setData]       = useState([])
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    if (!exerciseId) { setData([]); return }
+    if (!exerciseId || !user) { setData([]); return }
     setLoading(true)
-    getAllSessions().then(sessions => {
+    getAllSessions(user.id).then(sessions => {
       const result = sessions
         .filter(s => s.exercises.some(e => e.exerciseId === exerciseId))
         .map(s => {
-          const ex = s.exercises.find(e => e.exerciseId === exerciseId)
-          const maxWeight  = Math.max(...ex.sets.map(set => Number(set.weightKg)))
-          const totalReps  = ex.sets.reduce((acc, set) => acc + Number(set.reps), 0)
-          const volume     = ex.sets.reduce((acc, set) =>
+          const ex        = s.exercises.find(e => e.exerciseId === exerciseId)
+          const maxWeight = Math.max(...ex.sets.map(set => Number(set.weightKg)))
+          const totalReps = ex.sets.reduce((acc, set) => acc + Number(set.reps), 0)
+          const volume    = ex.sets.reduce((acc, set) =>
             acc + Number(set.weightKg) * Number(set.reps), 0)
           return {
             date:      formatDateChart(s.startedAt),
@@ -30,7 +32,7 @@ export function useExerciseHistory(exerciseId) {
       setData(result)
       setLoading(false)
     })
-  }, [exerciseId])
+  }, [exerciseId, user])
 
   return { data, loading }
 }

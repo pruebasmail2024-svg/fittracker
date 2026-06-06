@@ -1,5 +1,5 @@
 import { unzipSync, strFromU8 } from 'fflate'
-import { dbPromise } from './db'
+import { supabase } from '../lib/supabase'
 
 const REQUIRED = ['peso_corporal.csv', 'entrenamientos.csv', 'consistencia_semanal.csv']
 
@@ -30,13 +30,13 @@ function csvToSessions(rows) {
       })
     }
     const session  = map.get(key)
-    let exercise   = session.exercises.find(e => e.exerciseId === row.ejercicio)
+    let exercise   = session.exercises.find(e => e.exerciseId === row.ejercicio_id)
     if (!exercise) {
-      exercise = { exerciseId: row.ejercicio, sets: [] }
+      exercise = { exerciseId: row.ejercicio_id || row.ejercicio, sets: [] }
       session.exercises.push(exercise)
     }
     exercise.sets.push({
-      weightKg: Number(row.peso_kg)  || 0,
+      weightKg: Number(row.peso_kg)      || 0,
       reps:     Number(row.repeticiones) || 0,
     })
   })
@@ -45,11 +45,6 @@ function csvToSessions(rows) {
 
 // ─── API pública ──────────────────────────────────────────────────────────────
 
-/**
- * Parsea el ZIP seleccionado por el usuario y devuelve un preview
- * con los conteos + los datos listos para importar.
- * Lanza un Error descriptivo si el ZIP no es válido.
- */
 export async function parseBackupZip(file) {
   let unzipped
   try {
@@ -65,16 +60,12 @@ export async function parseBackupZip(file) {
     throw new Error(`El ZIP no tiene el formato correcto. Archivos faltantes: ${missing.join(', ')}.`)
   }
 
-  const pesoCsv  = parseCSV(strFromU8(unzipped['peso_corporal.csv']))
-  const entCsv   = parseCSV(strFromU8(unzipped['entrenamientos.csv']))
-  const consCsv  = parseCSV(strFromU8(unzipped['consistencia_semanal.csv']))
+  const pesoCsv = parseCSV(strFromU8(unzipped['peso_corporal.csv']))
+  const entCsv  = parseCSV(strFromU8(unzipped['entrenamientos.csv']))
+  const consCsv = parseCSV(strFromU8(unzipped['consistencia_semanal.csv']))
 
-  // Validación básica de columnas
   if (pesoCsv.length > 0 && !('peso_kg' in pesoCsv[0])) {
     throw new Error('peso_corporal.csv no tiene el formato esperado (columnas: fecha, peso_kg).')
-  }
-  if (entCsv.length > 0 && !('ejercicio' in entCsv[0])) {
-    throw new Error('entrenamientos.csv no tiene el formato esperado.')
   }
 
   const sessions = csvToSessions(entCsv)
@@ -89,37 +80,39 @@ export async function parseBackupZip(file) {
   }
 }
 
-/**
- * Borra los datos actuales en IndexedDB y los reemplaza con los del backup.
- * La consistencia no se importa porque es un dato calculado.
- */
 export async function confirmImport({ pesoCsv, sessions }) {
-  const db = await dbPromise
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('No hay usuario autenticado.')
 
-  // Limpiar weightLogs
-  const tx1 = db.transaction('weightLogs', 'readwrite')
-  await tx1.store.clear()
-  await tx1.done
-
-  // Limpiar workoutSessions
-  const tx2 = db.transaction('workoutSessions', 'readwrite')
-  await tx2.store.clear()
-  await tx2.done
+  // Limpiar datos existentes
+  await supabase.from('weight_logs').delete().eq('user_id', user.id)
+  await supabase.from('workout_sessions').delete().eq('user_id', user.id)
 
   // Reinsertar peso
-  const tx3 = db.transaction('weightLogs', 'readwrite')
-  for (const row of pesoCsv) {
-    await tx3.store.add({
-      weightKg:   Number(row.peso_kg) || 0,
-      recordedAt: `${row.fecha}T12:00:00.000Z`,
-    })
+  if (pesoCsv.length > 0) {
+    const weightRows = pesoCsv.map(row => ({
+      user_id: user.id,
+      peso_kg: Number(row.peso_kg) || 0,
+      fecha:   `${row.fecha}T12:00:00.000Z`,
+    }))
+    const { error } = await supabase.from('weight_logs').insert(weightRows)
+    if (error) throw error
   }
-  await tx3.done
 
   // Reinsertar sesiones
-  const tx4 = db.transaction('workoutSessions', 'readwrite')
-  for (const session of sessions) {
-    await tx4.store.add(session)
+  if (sessions.length > 0) {
+    const sessionRows = sessions.map(s => ({
+      user_id:          user.id,
+      day_index:        s.dayIndex,
+      started_at:       s.startedAt,
+      completed_at:     s.completedAt,
+      exercises:        s.exercises,
+      session_type:     'gym',
+      volume_kg:        s.exercises.reduce((t, ex) =>
+        t + ex.sets.reduce((st, set) => st + Number(set.weightKg) * Number(set.reps), 0), 0),
+      duration_seconds: 0,
+    }))
+    const { error } = await supabase.from('workout_sessions').insert(sessionRows)
+    if (error) throw error
   }
-  await tx4.done
 }

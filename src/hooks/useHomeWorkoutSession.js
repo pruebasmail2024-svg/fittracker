@@ -1,13 +1,13 @@
 import { useState, useCallback } from 'react'
 import { getAllSessions, saveWorkoutSession } from '../services/workoutService'
 import { filtrarEjercicios } from './useEjerciciosCatalogo'
+import { useAuth } from '../contexts/AuthContext'
 
 let _instanceCounter = 0
 
-/** Carga el último registro de cada ejercicio en casa para sobrecarga progresiva. */
-async function loadPrevData() {
-  const all         = await getAllSessions()
-  const casaEjs     = filtrarEjercicios({ lugar: 'casa' })
+async function loadPrevData(userId) {
+  const all     = await getAllSessions(userId)
+  const casaEjs = filtrarEjercicios({ lugar: 'casa' })
   const map = {}
   casaEjs.forEach(ex => {
     const last = [...all]
@@ -19,23 +19,23 @@ async function loadPrevData() {
 }
 
 export function useHomeWorkoutSession() {
-  // phase: 'idle' | 'active' | 'done'
-  const [phase, setPhase]           = useState('idle')
-  const [sessionType, setSessionType] = useState(null)   // 'home_replacement' | 'home_extra'
-  const [dayIndex, setDayIndex]     = useState(null)
-  const [startedAt, setStartedAt]   = useState(null)
-  const [blocks, setBlocks]         = useState([])       // [{ instanceId, exerciseId, sets }]
-  const [prevData, setPrevData]     = useState({})       // exerciseId → { sets }
+  const { user }                              = useAuth()
+  const [phase, setPhase]                     = useState('idle')
+  const [sessionType, setSessionType]         = useState(null)
+  const [dayIndex, setDayIndex]               = useState(null)
+  const [startedAt, setStartedAt]             = useState(null)
+  const [blocks, setBlocks]                   = useState([])
+  const [prevData, setPrevData]               = useState({})
 
   const start = useCallback(async (type, gymDayIndex = null) => {
-    const prev = await loadPrevData()
+    const prev = await loadPrevData(user.id)
     setSessionType(type)
     setDayIndex(gymDayIndex)
     setStartedAt(new Date().toISOString())
     setBlocks([])
     setPrevData(prev)
     setPhase('active')
-  }, [])
+  }, [user])
 
   const addExercise = useCallback((exerciseId) => {
     const instanceId = `${exerciseId}_${++_instanceCounter}`
@@ -70,15 +70,11 @@ export function useHomeWorkoutSession() {
       .filter(b => b.sets.length > 0)
       .map(b => ({ exerciseId: b.exerciseId, sets: b.sets }))
 
-    await saveWorkoutSession({
-      dayIndex,
-      startedAt,
-      exercises,
-      durationSeconds,
-      sessionType,
+    await saveWorkoutSession(user.id, {
+      dayIndex, startedAt, exercises, durationSeconds, sessionType,
     })
     setPhase('done')
-  }, [blocks, dayIndex, startedAt, sessionType])
+  }, [user, blocks, dayIndex, startedAt, sessionType])
 
   const reset = useCallback(() => {
     setPhase('idle')
