@@ -2,9 +2,7 @@ import { NavLink }              from 'react-router-dom'
 import { useNotifications }     from '../hooks/useNotifications'
 import InAppReminderBanner      from '../components/InAppReminderBanner'
 import BackupReminderBanner     from '../components/BackupReminderBanner'
-import ErrorBanner              from '../components/ErrorBanner'
 import { generateAndDownloadBackup } from '../services/exportService'
-import { useHomeData }          from '../hooks/useHomeData'
 
 const NAV_ITEMS = [
   { to: '/',            label: 'Inicio',   icon: '🏠' },
@@ -20,8 +18,6 @@ export default function AppShell({ children }) {
     showBanner, bannerType, dismissBanner,
     showBackupBanner, dismissBackupBanner,
   } = useNotifications()
-  const { error, reload } = useHomeData()
-
   async function handleBackupDownload() {
     try {
       await generateAndDownloadBackup()
@@ -32,16 +28,16 @@ export default function AppShell({ children }) {
   }
 
   return (
-    <div className="flex flex-col h-dvh max-w-lg mx-auto bg-slate-950">
-      {/* Header */}
-      <header className="flex items-center justify-between px-4 py-3 border-b border-slate-800">
+    <div className="flex flex-col h-dvh max-w-lg mx-auto bg-slate-950 overscroll-none">
+      {/* Header — padding-top cubre la status bar en PWA iOS */}
+      <header className="flex items-center justify-between px-4 py-3 border-b border-slate-800"
+              style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}>
         <span className="text-brand-400 font-bold tracking-wide text-sm uppercase">
           FitTracker
         </span>
       </header>
 
       {/* Banners bajo el header */}
-      {error && <ErrorBanner onRetry={reload} />}
       {showBanner && (
         <InAppReminderBanner type={bannerType} onDismiss={dismissBanner} />
       )}
@@ -53,20 +49,21 @@ export default function AppShell({ children }) {
       )}
 
       {/* Contenido principal */}
-      <main className="flex-1 overflow-y-auto px-4 py-4">
+      <main className="flex-1 min-h-0 overflow-y-auto px-4 py-4">
         {children}
       </main>
 
-      {/* Navegación inferior */}
-      <nav className="border-t border-slate-800 bg-slate-900">
+      {/* Navegación inferior — padding-bottom cubre el home indicator de iOS */}
+      <nav className="border-t border-slate-800 bg-slate-900 shrink-0"
+           style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         <ul className="flex">
           {NAV_ITEMS.map(({ to, label, icon }) => (
-            <li key={to} className="flex-1">
+            <li key={to} className="flex-1 min-w-0">
               <NavLink
                 to={to}
                 end={to === '/'}
                 className={({ isActive }) =>
-                  `flex flex-col items-center justify-center gap-0.5 py-2 text-xs transition-colors ${
+                  `flex flex-col items-center justify-center gap-0.5 py-2 transition-colors ${
                     isActive
                       ? 'text-brand-400'
                       : 'text-slate-500 hover:text-slate-300'
@@ -74,7 +71,7 @@ export default function AppShell({ children }) {
                 }
               >
                 <span className="text-xl leading-none">{icon}</span>
-                <span className="leading-none">{label}</span>
+                <span className="text-[10px] leading-none truncate w-full text-center">{label}</span>
               </NavLink>
             </li>
           ))}
