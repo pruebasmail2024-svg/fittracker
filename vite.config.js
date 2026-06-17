@@ -60,6 +60,12 @@ export default defineConfig({
         // Cachea todos los assets generados por Vite (JS, CSS con hash)
         globPatterns: ['**/*.{js,css,html,ico,png,svg,gif}'],
 
+        // Auto-reparación de PWA instaladas: el SW nuevo toma control enseguida
+        // y borra los precachés viejos. Evita quedar servido con assets rotos.
+        cleanupOutdatedCaches: true,
+        skipWaiting: true,
+        clientsClaim: true,
+
         runtimeCaching: [
           // GIFs de ejercicios: CacheFirst — nunca cambian, prioridad offline máxima
           {
