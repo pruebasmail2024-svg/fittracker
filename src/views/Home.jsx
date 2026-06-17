@@ -77,13 +77,13 @@ function NextSessionCard({ day, trainedToday, todaySession, onStart, onViewHisto
           {trainedToday ? 'Sesión completada hoy' : 'Próxima sesión'}
         </p>
         <h2 className="text-lg font-bold text-slate-100 mt-0.5">
-          {day.label} — {day.focus}
+          {day?.label} — {day?.focus}
         </h2>
       </div>
 
       {/* Ejercicios del día — de a pares */}
       <ul className="flex flex-col gap-1">
-        {(day.slots ?? []).reduce((acc, slot, i) => {
+        {(day?.slots ?? []).reduce((acc, slot, i) => {
           if (i % 2 === 0) acc.push([slot, day.slots[i + 1]].filter(Boolean))
           return acc
         }, []).map((par, i) => {
@@ -290,7 +290,7 @@ export default function Home() {
       ? '💪 Hoy es día de entreno. ¿Arrancamos?'
       : '🔄 Día de descanso. Recuperate bien.'
 
-  if (loading) {
+  if (loading || !rutina) {
     return (
       <div className="flex items-center justify-center h-full text-slate-600 text-sm">
         Cargando…
