@@ -61,6 +61,30 @@ git push   # Vercel detecta el push y deploya en 1-2 min
 Los usuarios en el celular reciben la nueva versión la próxima vez que abren la app
 (el Service Worker detecta el cambio en segundo plano).
 
+### Cuenta de GitHub para este repo
+
+> ⚠️ Este proyecto se pushea con la cuenta **`pruebasmail2024-svg`**, NO con la
+> cuenta global de la máquina (`sebaprodus-tech`). Pushear con la cuenta global
+> da error `403 Permission denied`.
+
+La cuenta correcta está embebida en la URL del remote, así que `git push` ya la usa
+automáticamente sin pasos extra:
+
+```bash
+git remote -v
+# origin  https://pruebasmail2024-svg@github.com/pruebasmail2024-svg/fittracker.git
+```
+
+Hay dos cuentas de GitHub en esta computadora; Git Credential Manager guarda un token
+por cada una. Si en otra máquina el remote no tiene el usuario embebido, agregarlo:
+
+```bash
+git remote set-url origin https://pruebasmail2024-svg@github.com/pruebasmail2024-svg/fittracker.git
+```
+
+El primer push pide login en el navegador (elegir `pruebasmail2024-svg`); después
+queda cacheado.
+
 ---
 
 ## Cómo instalarla como PWA en iOS (Safari)
