@@ -8,16 +8,30 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    let settled = false
+    const finish = (session) => {
+      if (settled) return
+      settled = true
       setUser(session?.user ?? null)
       setLoading(false)
-    })
+    }
+
+    // Red de seguridad: si getSession se cuelga (PWA iOS, sin red, lock de token),
+    // soltamos la pantalla de carga a los 5s y caemos a login en vez de quedar negros.
+    const timeout = setTimeout(() => finish(null), 5000)
+
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => finish(session))
+      .catch(() => finish(null))
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
     })
 
-    return () => subscription.unsubscribe()
+    return () => {
+      clearTimeout(timeout)
+      subscription.unsubscribe()
+    }
   }, [])
 
   async function signUp(email, password) {
