@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
-import { getAllSessions }      from '../services/workoutService'
-import { resolverEjercicio }  from '../services/rutinaService'
+import { getAllSessions }             from '../services/workoutService'
+import { resolverEjercicio, idCanonico } from '../services/rutinaService'
+import { useAuth }                    from '../contexts/AuthContext'
 
 /**
  * Selector de ejercicio que muestra únicamente los ejercicios
@@ -9,14 +10,18 @@ import { resolverEjercicio }  from '../services/rutinaService'
  * Si un ejercicio no está en el catálogo (legacy), muestra el ID como fallback.
  */
 export default function ExerciseSelector({ value, onChange }) {
+  const { user }                = useAuth()
   const [opciones, setOpciones] = useState([])
+  const [debug, setDebug]       = useState('sin correr')
 
   useEffect(() => {
-    getAllSessions().then(sessions => {
-      // Recolectar todos los exerciseId únicos con al menos 1 sesión
+    if (!user) { setDebug('user = null'); return }
+    getAllSessions(user.id).then(sessions => {
+      // Recolectar los exerciseId únicos (canónicos) con al menos 1 sesión.
+      // Normalizar a canónico une historial viejo + nuevo del mismo ejercicio.
       const idsSeen = new Set()
       sessions.forEach(s =>
-        (s.exercises ?? []).forEach(ex => idsSeen.add(ex.exerciseId))
+        (s.exercises ?? []).forEach(ex => idsSeen.add(idCanonico(ex.exerciseId)))
       )
 
       // Resolver cada ID contra el catálogo y armar la lista
@@ -36,9 +41,13 @@ export default function ExerciseSelector({ value, onChange }) {
           return a.nombre.localeCompare(b.nombre)
         })
 
+      setDebug(`sesiones=${sessions.length} · ids=${idsSeen.size} · opciones=${lista.length}`)
       setOpciones(lista)
+    }).catch(err => {
+      console.error('ExerciseSelector error:', err)
+      setDebug(`ERROR: ${err?.message ?? err}`)
     })
-  }, [])
+  }, [user])
 
   // Agrupar por músculo para el <optgroup>
   const grupos = opciones.reduce((acc, ex) => {
@@ -73,6 +82,7 @@ export default function ExerciseSelector({ value, onChange }) {
           Registrá sesiones para ver tu historial de ejercicios.
         </p>
       )}
+      <p className="text-[10px] text-amber-500 font-mono break-all">🐞 {debug}</p>
     </div>
   )
 }

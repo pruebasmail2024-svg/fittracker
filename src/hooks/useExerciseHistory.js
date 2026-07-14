@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { getAllSessions } from '../services/workoutService'
+import { idCanonico } from '../services/rutinaService'
 import { formatDateChart } from '../utils/date'
 import { useAuth } from '../contexts/AuthContext'
 
@@ -11,11 +12,12 @@ export function useExerciseHistory(exerciseId) {
   useEffect(() => {
     if (!exerciseId || !user) { setData([]); return }
     setLoading(true)
+    const objetivo = idCanonico(exerciseId)
     getAllSessions(user.id).then(sessions => {
       const result = sessions
-        .filter(s => s.exercises.some(e => e.exerciseId === exerciseId))
+        .filter(s => s.exercises?.some(e => idCanonico(e.exerciseId) === objetivo))
         .map(s => {
-          const ex        = s.exercises.find(e => e.exerciseId === exerciseId)
+          const ex        = s.exercises.find(e => idCanonico(e.exerciseId) === objetivo)
           const maxWeight = Math.max(...ex.sets.map(set => Number(set.weightKg)))
           const totalReps = ex.sets.reduce((acc, set) => acc + Number(set.reps), 0)
           const volume    = ex.sets.reduce((acc, set) =>

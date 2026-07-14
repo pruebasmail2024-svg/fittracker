@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
-import { getDiaParaSesion } from '../services/rutinaService'
+import { getDiaParaSesion, idCanonico } from '../services/rutinaService'
 import { saveWorkoutSession, getAllSessions } from '../services/workoutService'
 import { useRestTimer } from './useRestTimer'
 import { useAuth } from '../contexts/AuthContext'
@@ -8,10 +8,11 @@ async function buildLastDataMap(userId, exercises) {
   const allSessions = await getAllSessions(userId)
   const map = {}
   exercises.forEach(ex => {
+    const objetivo = idCanonico(ex.id)
     const last = [...allSessions]
-      .filter(s => s.exercises.some(e => e.exerciseId === ex.id))
+      .filter(s => s.exercises?.some(e => idCanonico(e.exerciseId) === objetivo))
       .at(-1)
-    if (last) map[ex.id] = last.exercises.find(e => e.exerciseId === ex.id)
+    if (last) map[ex.id] = last.exercises.find(e => idCanonico(e.exerciseId) === objetivo)
   })
   return map
 }

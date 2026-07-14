@@ -91,6 +91,12 @@ export function resolverEjercicio(exerciseId) {
   return LEGACY_EXERCISES[exerciseId] ?? LEGACY_EXERCISES[nuevoId] ?? null
 }
 
+// Normaliza un exerciseId a su forma canónica (mapea IDs viejos → nuevos).
+// Usarlo al comparar IDs de sesiones guardadas contra los de la rutina actual.
+export function idCanonico(exerciseId) {
+  return COMPAT_MAP[exerciseId] ?? exerciseId
+}
+
 // ─── API pública (async) ──────────────────────────────────────────────────────
 
 export async function getRutina(userId) {
